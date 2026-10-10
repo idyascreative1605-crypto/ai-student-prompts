@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>مساعد المراجعة | Assistant de révision</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #eef4f4;
+    --paper: #ffffff;
+    --ink: #10282e;
+    --muted: #546e73;
+    --line: #cddcde;
+    --brand: #0b6e78;
+    --brand-ink: #ffffff;
+    --hl: #ffe066;
+    --danger: #b3261e;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "IBM Plex Sans Arabic", "Segoe UI", Tahoma, Arial, sans-serif;
+    font-size: 17px;
+    line-height: 1.7;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 20px 18px 64px; }
+  .top { display: flex; justify-content: flex-end; }
+  .lang-btn {
+    font: inherit; font-size: 15px; cursor: pointer;
+    background: transparent; color: var(--brand);
+    border: 1.5px solid var(--brand); border-radius: 999px;
+    padding: 4px 16px;
+  }
+  .lang-btn:hover { background: var(--brand); color: var(--brand-ink); }
+  h1 {
+    font-size: clamp(28px, 6vw, 40px);
+    line-height: 1.25; font-weight: 700;
+    margin: 18px 0 10px; letter-spacing: -0.01em;
+  }
+  .sub { color: var(--muted); margin: 0 0 28px; max-width: 56ch; }
+
+  .panel {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 22px 20px;
+  }
+  .field { margin-bottom: 22px; }
+  .field:last-of-type { margin-bottom: 0; }
+  label, .lbl { display: block; font-weight: 500; margin-bottom: 6px; }
+  input[type=text], input[type=number], select, textarea {
+    width: 100%; font: inherit; color: var(--ink);
+    background: #fbfdfd; border: 1.5px solid var(--line);
+    border-radius: 8px; padding: 10px 12px;
+  }
+  textarea { min-height: 130px; resize: vertical; line-height: 1.6; }
+  input:focus-visible, select:focus-visible, textarea:focus-visible,
+  button:focus-visible, .drop:focus-within {
+    outline: 3px solid var(--brand); outline-offset: 2px;
+  }
+
+  .drop {
+    display: block; cursor: pointer; text-align: center;
+    border: 2px dashed var(--line); border-radius: 8px;
+    padding: 18px 12px; color: var(--muted); background: #fbfdfd;
+  }
+  .drop:hover { border-color: var(--brand); color: var(--ink); }
+  .drop input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+  .drop.has { border-style: solid; border-color: var(--brand); color: var(--ink); font-weight: 500; }
+  .clear-file {
+    font: inherit; font-size: 14px; background: none; border: 0;
+    color: var(--danger); cursor: pointer; padding: 4px 0; margin-top: 4px;
+  }
+
+  .modes { display: flex; flex-wrap: wrap; gap: 8px; }
+  .mode { position: relative; }
+  .mode input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
+  .mode span {
+    display: block; padding: 6px 14px; border-radius: 6px;
+    border: 1.5px solid var(--line); background: #fbfdfd;
+    transition: background .15s;
+  }
+  .mode input:checked + span {
+    background: linear-gradient(transparent 38%, var(--hl) 38%, var(--hl) 92%, transparent 92%);
+    border-color: var(--ink); font-weight: 700;
+  }
+  .mode input:focus-visible + span { outline: 3px solid var(--brand); outline-offset: 2px; }
+
+  .row { display: flex; gap: 14px; flex-wrap: wrap; }
+  .row .field { flex: 1 1 180px; }
+
+  .go {
+    width: 100%; font: inherit; font-size: 18px; font-weight: 700;
+    background: var(--brand); color: var(--brand-ink);
+    border: 0; border-radius: 8px; padding: 13px; cursor: pointer;
+    margin-top: 6px;
+  }
+  .go:hover { filter: brightness(1.1); }
+  .go[disabled] { opacity: .6; cursor: wait; }
+
+  .msg { margin-top: 16px; padding: 12px 14px; border-radius: 8px; display: none; }
+  .msg.err { display: block; background: #fdecea; color: var(--danger); border: 1px solid #f3c1bd; }
+  .msg.wait { display: block; background: #eaf3f4; color: var(--brand); border: 1px solid var(--line); }
+
+  .result { display: none; margin-top: 26px; }
+  .result.show { display: block; }
+  .tools { display: flex; gap: 8px; margin-bottom: 10px; }
+  .tools button {
+    font: inherit; font-size: 15px; cursor: pointer;
+    background: var(--paper); color: var(--ink);
+    border: 1.5px solid var(--line); border-radius: 6px; padding: 4px 14px;
+  }
+  .tools button:hover { border-color: var(--brand); }
+  .sheet {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-inline-start: 6px solid var(--brand);
+    border-radius: 10px; padding: 8px 22px 18px;
+  }
+  .sheet h2, .sheet h3, .sheet h4, .sheet h5 { line-height: 1.35; margin: 1.3em 0 .4em; }
+  .sheet h2 { font-size: 22px; } .sheet h3 { font-size: 19px; }
+  .sheet h4, .sheet h5 { font-size: 17px; }
+  .sheet p { margin: .6em 0; }
+  .sheet ul, .sheet ol { margin: .5em 0; padding-inline-start: 1.4em; }
+  .sheet li { margin: .25em 0; }
+  .note { color: var(--muted); font-size: 15px; margin-top: 12px; }
+
+  @media print {
+    body { background: #fff; }
+    .top, h1, .sub, .panel, .tools, .msg, .note { display: none !important; }
+    .result { display: block !important; margin: 0; }
+    .sheet { border: 0; padding: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><button class="lang-btn" id="langBtn" type="button">Français</button></div>
+
+  <h1 id="t_title"></h1>
+  <p class="sub" id="t_sub"></p>
+
+  <div class="panel">
+    <div class="field">
+      <label for="code" id="t_code"></label>
+      <input type="text" id="code" autocomplete="off" dir="ltr">
+    </div>
+
+    <div class="field">
+      <span class="lbl" id="t_file"></span>
+      <label class="drop" id="drop">
+        <input type="file" id="file" accept=".pdf,.txt,image/*">
+        <span id="dropText"></span>
+      </label>
+      <button type="button" class="clear-file" id="clearFile" hidden></button>
+    </div>
+
+    <div class="field">
+      <label for="text" id="t_text"></label>
+      <textarea id="text"></textarea>
+    </div>
+
+    <div class="field">
+      <span class="lbl" id="t_mode"></span>
+      <div class="modes" id="modes"></div>
+    </div>
+
+    <div class="row">
+      <div class="field" id="countField" hidden>
+        <label for="count" id="t_count"></label>
+        <input type="number" id="count" min="1" max="30" value="10">
+      </div>
+      <div class="field">
+        <label for="outLang" id="t_outLang"></label>
+        <select id="outLang"></select>
+      </div>
+    </div>
+
+    <button class="go" id="go" type="button"></button>
+    <div class="msg" id="msg" role="status" aria-live="polite"></div>
+  </div>
+
+  <div class="result" id="result">
+    <div class="tools">
+      <button type="button" id="copyBtn"></button>
+      <button type="button" id="printBtn"></button>
+    </div>
+    <div class="sheet" id="sheet"></div>
+    <p class="note" id="t_note"></p>
+  </div>
+</div>
+
+<script>
+// عنوان الـ Worker الخاص بك
+const WORKER_URL = "https://student-ai.idyascreative1605.workers.dev";
+const MAX_BYTES = 10 * 1024 * 1024;
+
+const I18N = {
+  ar: {
+    dir: "rtl", toggle: "Français",
+    title: "حوّل درسك إلى ملخص أو اختبار",
+    sub: "ارفع ملف الدرس أو ألصق نصه، ثم اختر ما تريد.",
+    code: "كود الاشتراك", file: "ملف الدرس",
+    drop: "اختر ملف PDF أو صورة (حتى 10 ميغا)",
+    text: "أو ألصق نص الدرس هنا",
+    mode: "ماذا تريد؟",
+    modes: { summary: "تلخيص", memorize: "حفظ", review: "مراجعة", qcm: "QCM (اختيار متعدد)", qcs: "QCS (اختيار واحد)" },
+    count: "عدد الأسئلة", outLang: "لغة الناتج",
+    langs: { auto: "نفس لغة الدرس", ar: "العربية", fr: "Français" },
+    go: "ابدأ", wait: "جارٍ التحضير، قد يستغرق دقيقة…",
+    copy: "نسخ", copied: "تم النسخ", print: "طباعة", clear: "إزالة الملف",
+    note: "راجع الإجابات مع درسك قبل الاعتماد عليها.",
+    e_code: "أدخل كود الاشتراك.",
+    e_content: "ارفع ملفاً أو ألصق نصاً.",
+    e_big: "الملف أكبر من 10 ميغا.",
+    e_type: "صيغة غير مدعومة. استخدم PDF أو صورة أو ملف نصي.",
+    e_net: "تعذّر الاتصال بالخدمة. تحقق من الإنترنت وأعد المحاولة.",
+    e_gen: "حدث خطأ أثناء المعالجة. أعد المحاولة بعد قليل."
+  },
+  fr: {
+    dir: "ltr", toggle: "العربية",
+    title: "Transformez votre cours en résumé ou en quiz",
+    sub: "Importez votre cours ou collez le texte, puis choisissez ce que vous voulez.",
+    code: "Code d’abonnement", file: "Fichier du cours",
+    drop: "Choisir un PDF ou une image (10 Mo max)",
+    text: "Ou collez le texte du cours ici",
+    mode: "Que voulez-vous ?",
+    modes: { summary: "Résumé", memorize: "Mémoriser", review: "Réviser", qcm: "QCM (choix multiple)", qcs: "QCS (choix unique)" },
+    count: "Nombre de questions", outLang: "Langue du résultat",
+    langs: { auto: "Même langue que le cours", ar: "العربية", fr: "Français" },
+    go: "Lancer", wait: "Préparation en cours, cela peut prendre une minute…",
+    copy: "Copier", copied: "Copié", print: "Imprimer", clear: "Retirer le fichier",
+    note: "Vérifiez les réponses avec votre cours avant de vous y fier.",
+    e_code: "Saisissez votre code d’abonnement.",
+    e_content: "Importez un fichier ou collez du texte.",
+    e_big: "Le fichier dépasse 10 Mo.",
+    e_type: "Format non pris en charge. Utilisez un PDF, une image ou un fichier texte.",
+    e_net: "Connexion impossible. Vérifiez votre internet et réessayez.",
+    e_gen: "Une erreur est survenue. Réessayez dans un instant."
+  }
+};
+
+let lang = "ar";
+let fileData = null;   // { mime, data, name }
+let lastText = "";
+
+const $ = (id) => document.getElementById(id);
+
+function safeGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+function safeSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+
+function applyLang() {
+  const t = I18N[lang];
+  document.documentElement.lang = lang;
+  document.documentElement.dir = t.dir;
+  $("langBtn").textContent = t.toggle;
+  $("t_title").textContent = t.title;
+  $("t_sub").textContent = t.sub;
+  $("t_code").textContent = t.code;
+  $("t_file").textContent = t.file;
+  $("t_text").textContent = t.text;
+  $("t_mode").textContent = t.mode;
+  $("t_count").textContent = t.count;
+  $("t_outLang").textContent = t.outLang;
+  $("go").textContent = t.go;
+  $("copyBtn").textContent = t.copy;
+  $("printBtn").textContent = t.print;
+  $("clearFile").textContent = t.clear;
+  $("t_note").textContent = t.note;
+  if (!fileData) $("dropText").textContent = t.drop;
+
+  const cur = (document.querySelector("input[name=mode]:checked") || {}).value || "summary";
+  $("modes").innerHTML = Object.keys(t.modes).map((k) =>
+    `<label class="mode"><input type="radio" name="mode" value="${k}" ${k === cur ? "checked" : ""}><span>${t.modes[k]}</span></label>`
+  ).join("");
+  document.querySelectorAll("input[name=mode]").forEach((r) => r.addEventListener("change", syncMode));
+
+  const curLang = $("outLang").value || "auto";
+  $("outLang").innerHTML = Object.keys(t.langs).map((k) =>
+    `<option value="${k}" ${k === curLang ? "selected" : ""}>${t.langs[k]}</option>`
+  ).join("");
+  syncMode();
+}
+
+function syncMode() {
+  const m = document.querySelector("input[name=mode]:checked").value;
+  $("countField").hidden = !(m === "qcm" || m === "qcs");
+}
+
+function showMsg(kind, text) {
+  const el = $("msg");
+  el.className = "msg " + kind;
+  el.textContent = text;
+}
+function hideMsg() { $("msg").className = "msg"; }
+
+function esc(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+function inline(s) {
+  return esc(s).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/\*(.+?)\*/g, "<em>$1</em>");
+}
+function md(text) {
+  let html = "", list = null;
+  const close = () => { if (list) { html += "</" + list + ">"; list = null; } };
+  for (const raw of text.split("\n")) {
+    const l = raw.trimEnd();
+    let m;
+    if (!l.trim()) { close(); continue; }
+    if ((m = l.match(/^(#{1,4})\s+(.*)/))) {
+      close();
+      const n = Math.min(m[1].length + 1, 5);
+      html += `<h${n}>${inline(m[2])}</h${n}>`;
+    } else if ((m = l.match(/^\s*[-*•]\s+(.*)/))) {
+      if (list !== "ul") { close(); html += "<ul>"; list = "ul"; }
+      html += `<li>${inline(m[1])}</li>`;
+    } else if ((m = l.match(/^\s*(\d+)[.)]\s+(.*)/))) {
+      if (list !== "ol") { close(); html += `<ol start="${m[1]}">`; list = "ol"; }
+      html += `<li>${inline(m[2])}</li>`;
+    } else {
+      close();
+      html += `<p>${inline(l)}</p>`;
+    }
+  }
+  close();
+  return html;
+}
+
+function resetFile() {
+  fileData = null;
+  $("file").value = "";
+  $("drop").classList.remove("has");
+  $("dropText").textContent = I18N[lang].drop;
+  $("clearFile").hidden = true;
+}
+
+$("file").addEventListener("change", () => {
+  const t = I18N[lang];
+  const f = $("file").files[0];
+  hideMsg();
+  if (!f) return;
+  if (f.size > MAX_BYTES) { resetFile(); return showMsg("err", t.e_big); }
+
+  const isPdf = f.type === "application/pdf" || /\.pdf$/i.test(f.name);
+  const isImg = f.type.startsWith("image/");
+  const isTxt = f.type === "text/plain" || /\.txt$/i.test(f.name);
+
+  if (isTxt) {
+    const r = new FileReader();
+    r.onload = () => { $("text").value = r.result; resetFile(); };
+    r.readAsText(f);
+    return;
+  }
+  if (!isPdf && !isImg) { resetFile(); return showMsg("err", t.e_type); }
+
+  const r = new FileReader();
+  r.onload = () => {
+    fileData = { mime: isPdf ? "application/pdf" : f.type, data: String(r.result).split(",")[1], name: f.name };
+    $("drop").classList.add("has");
+    $("dropText").textContent = f.name;
+    $("clearFile").hidden = false;
+  };
+  r.readAsDataURL(f);
+});
+$("clearFile").addEventListener("click", resetFile);
+
+$("go").addEventListener("click", async () => {
+  const t = I18N[lang];
+  const code = $("code").value.trim();
+  const text = $("text").value.trim();
+  if (!code) return showMsg("err", t.e_code);
+  if (!fileData && !text) return showMsg("err", t.e_content);
+  safeSet("ss_code", code);
+
+  const mode = document.querySelector("input[name=mode]:checked").value;
+  const body = { code, mode, lang: $("outLang").value, count: parseInt($("count").value, 10) || 10 };
+  if (text) body.text = text;
+  if (fileData) body.file = { mime: fileData.mime, data: fileData.data };
+
+  $("go").disabled = true;
+  $("result").classList.remove("show");
+  showMsg("wait", t.wait);
+
+  try {
+    const res = await fetch(WORKER_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.result) {
+      showMsg("err", data.error || t.e_gen);
+    } else {
+      hideMsg();
+      lastText = data.result;
+      $("sheet").innerHTML = md(data.result);
+      $("result").classList.add("show");
+      $("result").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  } catch (e) {
+    showMsg("err", t.e_net);
+  } finally {
+    $("go").disabled = false;
+  }
+});
+
+$("copyBtn").addEventListener("click", async () => {
+  const t = I18N[lang];
+  try { await navigator.clipboard.writeText(lastText); $("copyBtn").textContent = t.copied; }
+  catch (e) {}
+  setTimeout(() => { $("copyBtn").textContent = t.copy; }, 1500);
+});
+$("printBtn").addEventListener("click", () => window.print());
+
+$("langBtn").addEventListener("click", () => {
+  lang = lang === "ar" ? "fr" : "ar";
+  safeSet("ss_lang", lang);
+  applyLang();
+});
+
+const savedLang = safeGet("ss_lang");
+if (savedLang === "fr" || savedLang === "ar") lang = savedLang;
+const savedCode = safeGet("ss_code");
+if (savedCode) $("code").value = savedCode;
+applyLang();
+</script>
+</body>
+</html>
