@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>YES TEST | لوحة الإدارة</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root { --navy:#01516e; --teal:#01707f; --aqua:#00a6a5; --orange:#fda301; --bg:#f1f6f7; --ink:#0e2a35; --muted:#5a7480; --line:#d5e2e6; --ok:#1b7f3b; --bad:#b3261e; }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: "IBM Plex Sans Arabic","Segoe UI",Tahoma,Arial,sans-serif; font-size: 16px; line-height: 1.6; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 0 14px 60px; }
+  header { background: linear-gradient(100deg, var(--navy), var(--teal)); color: #fff; padding: 14px 16px; border-radius: 0 0 18px 18px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  header h1 { font-size: 20px; margin: 0; }
+  button { font: inherit; cursor: pointer; }
+  .btn { border-radius: 10px; padding: 7px 14px; font-weight: 700; background: var(--teal); color: #fff; border: 1.5px solid var(--teal); }
+  .btn.ghost { background: transparent; color: var(--teal); }
+  .btn.warn { background: transparent; color: var(--bad); border-color: var(--bad); }
+  .btn.orange { background: var(--orange); border-color: var(--orange); color: #1d2a30; }
+  .btn.sm { padding: 4px 10px; font-size: 14px; }
+  .btn[disabled] { opacity: .5; }
+  input, select { font: inherit; color: var(--ink); background: #fff; border: 1.5px solid var(--line); border-radius: 10px; padding: 8px 10px; width: 100%; }
+  label { display: block; font-weight: 500; font-size: 14px; margin-bottom: 3px; }
+  .card { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; margin-top: 14px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; align-items: end; }
+  .tabs { display: flex; gap: 8px; margin-top: 16px; }
+  .tab { flex: 1; padding: 9px; border-radius: 10px; border: 1.5px solid var(--line); background: #fff; font-weight: 500; }
+  .tab.on { background: var(--teal); color: #fff; border-color: var(--teal); font-weight: 700; }
+  .code { font-family: ui-monospace, Consolas, monospace; direction: ltr; font-size: 18px; font-weight: 700; letter-spacing: .06em; }
+  .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .muted { color: var(--muted); font-size: 14px; }
+  .pill { font-size: 12px; padding: 1px 9px; border-radius: 99px; background: #d3f0ef; color: var(--navy); }
+  .pill.off { background: #fdecea; color: var(--bad); } .pill.exp { background: #fff0cc; color: #8a6400; }
+  .actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 10px 18px; border-radius: 99px; z-index: 50; max-width: 90vw; }
+  .toast.err { background: var(--bad); }
+  .made { border: 2px solid var(--ok); background: #f1faf3; }
+  .modes { display: flex; gap: 12px; flex-wrap: wrap; } .modes label { display: flex; gap: 6px; align-items: center; font-weight: 400; margin: 0; }
+  .modes input { width: auto; accent-color: var(--teal); }
+  details summary { cursor: pointer; color: var(--teal); font-size: 14px; margin-top: 8px; }
+</style>
+</head>
+<body>
+<header><h1>YES TEST · لوحة الإدارة</h1><button class="btn ghost sm" id="logout" style="color:#fff;border-color:#fff" hidden>خروج</button></header>
+<div class="wrap">
+
+  <section id="login" class="card">
+    <label for="tok">رمز الإدارة (ADMIN_TOKEN)</label>
+    <input id="tok" type="password" autocomplete="off" dir="ltr">
+    <div class="actions"><button class="btn" id="loginBtn" type="button">دخول</button></div>
+    <p class="muted" id="loginMsg"></p>
+  </section>
+
+  <section id="panel" hidden>
+    <div class="tabs"><button class="tab on" data-tab="codes" type="button">الأكواد</button><button class="tab" data-tab="plans" type="button">الباقات</button></div>
+
+    <div id="codesTab">
+      <div class="card">
+        <b>إنشاء كود جديد</b>
+        <div class="grid" style="margin-top:8px">
+          <div><label for="nName">اسم الطالب</label><input id="nName" placeholder="اختياري"></div>
+          <div><label for="nPlan">الباقة</label><select id="nPlan"></select></div>
+          <div><label for="nDays">المدة</label><select id="nDays">
+            <option value="30">30 يوماً</option><option value="90">3 أشهر</option><option value="180">6 أشهر</option><option value="365">سنة</option><option value="7">7 أيام (تجربة)</option><option value="0">بدون انتهاء</option></select></div>
+          <div><button class="btn orange" id="createBtn" type="button" style="width:100%">إنشاء</button></div>
+        </div>
+      </div>
+      <div class="card made" id="made" hidden></div>
+      <div class="card"><label for="q">بحث</label><input id="q" placeholder="كود أو اسم"></div>
+      <div id="codeList"></div>
+    </div>
+
+    <div id="plansTab" hidden></div>
+  </section>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+const WORKER_URL = "https://student-ai.idyascreative1605.workers.dev";
+const SITE_URL = "https://idyascreative1605-crypto.github.io/ai-student-prompts/";
+const MODE_LABEL = { qcs: "QCS", qcm: "QCM", summary: "تلخيص", memorize: "حفظ", review: "مراجعة" };
+const ALL_MODES = ["qcs", "qcm", "summary", "memorize", "review"];
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+let token = "", data = { plans: [], codes: [], today: "" };
+
+function toast(msg, err) {
+  const t = $("toast"); t.textContent = msg; t.className = "toast" + (err ? " err" : ""); t.hidden = false;
+  clearTimeout(toast.id); toast.id = setTimeout(() => { t.hidden = true; }, 2600);
+}
+async function api(action, extra) {
+  try {
+    const res = await fetch(WORKER_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, token, ...(extra || {}) }) });
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) { toast(d.error || "خطأ", true); return null; }
+    return d;
+  } catch (e) { toast("تعذّر الاتصال بالخدمة", true); return null; }
+}
+async function refresh() {
+  const d = await api("admin_overview"); if (!d) return false;
+  data = d; renderPlanSelect(); renderCodes(); renderPlans(); return true;
+}
+async function doLogin() {
+  token = $("tok").value.trim(); if (!token) return;
+  $("loginBtn").disabled = true;
+  const ok = await refresh();
+  $("loginBtn").disabled = false;
+  if (ok) { try { sessionStorage.setItem("yt_admin", token); } catch (e) {} $("login").hidden = true; $("panel").hidden = false; $("logout").hidden = false; }
+  else $("loginMsg").textContent = "رمز غير صحيح أو الخدمة غير جاهزة.";
+}
+$("loginBtn").onclick = doLogin;
+$("tok").addEventListener("keydown", (e) => { if (e.key === "Enter") doLogin(); });
+$("logout").onclick = () => { try { sessionStorage.removeItem("yt_admin"); } catch (e) {} location.reload(); };
+document.querySelectorAll(".tab").forEach((b) => b.onclick = () => {
+  document.querySelectorAll(".tab").forEach((x) => x.classList.toggle("on", x === b));
+  $("codesTab").hidden = b.dataset.tab !== "codes"; $("plansTab").hidden = b.dataset.tab !== "plans";
+});
+
+const planLabel = (n) => { const p = data.plans.find((x) => x.name === n); return p ? p.label : n; };
+function renderPlanSelect() {
+  $("nPlan").innerHTML = data.plans.map((p) => `<option value="${esc(p.name)}">${esc(p.label)} (${esc(p.name)})</option>`).join("");
+}
+
+/* ---------- codes ---------- */
+function status(c) {
+  if (!c.active) return '<span class="pill off">موقوف</span>';
+  if (c.expires_at && c.expires_at < data.today) return '<span class="pill exp">منتهي</span>';
+  return '<span class="pill">فعّال</span>';
+}
+function renderCodes() {
+  const q = $("q").value.trim().toLowerCase();
+  const list = data.codes.filter((c) => !q || c.code.toLowerCase().includes(q) || (c.student || "").toLowerCase().includes(q));
+  $("codeList").innerHTML = list.length ? list.map((c) => `
+    <div class="card" data-code="${esc(c.code)}">
+      <div class="row"><span class="code">${esc(c.code)}</span>${status(c)}</div>
+      <div class="muted">${esc(c.student || "بدون اسم")} · ${c.expires_at ? "ينتهي " + esc(c.expires_at) : "بدون انتهاء"} · اليوم ${c.today} · الإجمالي ${c.total}</div>
+      <div class="grid" style="margin-top:8px">
+        <div><label>الباقة</label><select data-f="plan">${data.plans.map((p) => `<option value="${esc(p.name)}" ${p.name === c.plan ? "selected" : ""}>${esc(p.label)}</option>`).join("")}</select></div>
+      </div>
+      <details><summary>تخصيص هذا الكود</summary>
+        <div class="grid" style="margin-top:6px">
+          <div><label>أقصى أسئلة (فارغ = حسب الباقة)</label><input data-f="max_questions" type="number" min="1" max="100" value="${c.max_questions == null ? "" : c.max_questions}"></div>
+          <div><label>الرصيد اليومي (فارغ = حسب الباقة)</label><input data-f="daily_limit" type="number" min="0" max="1000" value="${c.daily_limit == null ? "" : c.daily_limit}"></div>
+          <div><button class="btn sm" data-do="saveOverride" type="button">حفظ التخصيص</button></div>
+        </div></details>
+      <div class="actions">
+        <button class="btn sm" data-do="extend" data-days="30" type="button">+30 يوم</button>
+        <button class="btn sm" data-do="extend" data-days="90" type="button">+3 أشهر</button>
+        <button class="btn sm ghost" data-do="toggle" type="button">${c.active ? "تعطيل" : "تفعيل"}</button>
+        <button class="btn sm ghost" data-do="msg" type="button">نسخ رسالة</button>
+        <button class="btn sm warn" data-do="delete" type="button">حذف</button>
+      </div>
+    </div>`).join("") : '<div class="card muted">لا توجد أكواد.</div>';
+}
+$("q").addEventListener("input", renderCodes);
+
+function message(c) {
+  const exp = c.expires_at ? "صالح حتى: " + c.expires_at : "بدون تاريخ انتهاء";
+  return `مرحباً ${c.student || ""} 👋\nكودك في YES TEST: ${c.code}\nالباقة: ${planLabel(c.plan)}\n${exp}\nالرابط: ${SITE_URL}\nأدخل الكود في الصفحة الأولى للبدء.`;
+}
+async function copy(text) { try { await navigator.clipboard.writeText(text); toast("تم النسخ"); } catch (e) { toast("تعذّر النسخ", true); } }
+
+$("createBtn").onclick = async () => {
+  $("createBtn").disabled = true;
+  const d = await api("admin_create_code", { student: $("nName").value.trim(), plan: $("nPlan").value, days: parseInt($("nDays").value, 10) });
+  $("createBtn").disabled = false;
+  if (!d) return;
+  $("nName").value = "";
+  await refresh();
+  const c = { code: d.code, student: d.student, plan: d.plan, expires_at: d.expires_at };
+  $("made").hidden = false;
+  $("made").innerHTML = `<b>تم إنشاء الكود</b><div class="code" style="margin:6px 0">${esc(d.code)}</div>
+    <div class="muted">${esc(planLabel(d.plan))} · ${d.expires_at ? "حتى " + esc(d.expires_at) : "بدون انتهاء"}</div>
+    <div class="actions"><button class="btn sm" id="cpCode" type="button">نسخ الكود</button><button class="btn sm orange" id="cpMsg" type="button">نسخ رسالة للطالب</button></div>`;
+  $("cpCode").onclick = () => copy(d.code); $("cpMsg").onclick = () => copy(message(c));
+};
+
+$("codeList").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-do]"); if (!b) return;
+  const card = b.closest("[data-code]"), code = card.dataset.code, c = data.codes.find((x) => x.code === code);
+  const act = b.dataset.do;
+  if (act === "extend") { const d = await api("admin_extend", { code, days: parseInt(b.dataset.days, 10) }); if (d) { toast("تم التمديد حتى " + d.expires_at); refresh(); } }
+  else if (act === "toggle") { const d = await api("admin_update_code", { code, fields: { active: c.active ? 0 : 1 } }); if (d) { toast("تم"); refresh(); } }
+  else if (act === "delete") { if (confirm("حذف الكود " + code + " نهائياً؟")) { const d = await api("admin_delete_code", { code }); if (d) { toast("تم الحذف"); refresh(); } } }
+  else if (act === "msg") copy(message(c));
+  else if (act === "saveOverride") {
+    const f = { max_questions: card.querySelector('[data-f=max_questions]').value, daily_limit: card.querySelector('[data-f=daily_limit]').value };
+    const d = await api("admin_update_code", { code, fields: f }); if (d) { toast("تم الحفظ"); refresh(); }
+  }
+});
+$("codeList").addEventListener("change", async (e) => {
+  const s = e.target.closest('select[data-f=plan]'); if (!s) return;
+  const code = s.closest("[data-code]").dataset.code;
+  const d = await api("admin_update_code", { code, fields: { plan: s.value } }); if (d) { toast("تم تغيير الباقة"); refresh(); }
+});
+
+/* ---------- plans ---------- */
+function planCard(p, isNew) {
+  const modes = isNew ? ["summary", "qcm", "qcs"] : String(p.modes || "").split(",");
+  return `<div class="card" data-plan="${esc(p.name || "")}">
+    <div class="row"><b>${isNew ? "باقة جديدة" : esc(p.label) + " · " + esc(p.name)}</b></div>
+    <div class="grid" style="margin-top:8px">
+      ${isNew ? `<div><label>الاسم الداخلي (لاتيني)</label><input data-f="name" dir="ltr" placeholder="plus"></div>` : ""}
+      <div><label>الاسم الظاهر</label><input data-f="label" value="${esc(p.label || "")}"></div>
+      <div><label>أقصى عدد أسئلة</label><input data-f="max_questions" type="number" min="1" max="100" value="${p.max_questions ?? 5}"></div>
+      <div><label>الرصيد اليومي</label><input data-f="daily_limit" type="number" min="0" max="1000" value="${p.daily_limit ?? 5}"></div>
+      <div><label>أقصى حجم ملف (ميغا)</label><input data-f="max_file_mb" type="number" min="1" max="20" value="${p.max_file_mb ?? 5}"></div>
+    </div>
+    <div class="modes" style="margin-top:10px">${ALL_MODES.map((m) => `<label><input type="checkbox" data-m="${m}" ${modes.includes(m) ? "checked" : ""}>${MODE_LABEL[m]}</label>`).join("")}</div>
+    <div class="actions"><button class="btn sm" data-do="savePlan" type="button">حفظ</button></div></div>`;
+}
+function renderPlans() {
+  $("plansTab").innerHTML = data.plans.map((p) => planCard(p, false)).join("") + planCard({}, true);
+}
+$("plansTab").addEventListener("click", async (e) => {
+  const b = e.target.closest('[data-do=savePlan]'); if (!b) return;
+  const card = b.closest("[data-plan]"), g = (f) => { const el = card.querySelector(`[data-f=${f}]`); return el ? el.value : undefined; };
+  const name = card.dataset.plan || g("name");
+  const modes = [...card.querySelectorAll("[data-m]")].filter((x) => x.checked).map((x) => x.dataset.m).join(",");
+  const d = await api("admin_save_plan", { plan: { name, label: g("label"), max_questions: g("max_questions"), daily_limit: g("daily_limit"), max_file_mb: g("max_file_mb"), modes } });
+  if (d) { toast("تم حفظ الباقة"); refresh(); }
+});
+
+/* auto-login within the same browser tab session */
+try { const t = sessionStorage.getItem("yt_admin"); if (t) { $("tok").value = t; doLogin(); } } catch (e) {}
+</script>
+</body>
+</html>
