@@ -384,15 +384,19 @@ function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").
 function dateStr(ts) { return new Date(ts).toLocaleDateString(lang === "ar" ? "ar-u-nu-latn" : "fr-FR", { day: "numeric", month: "short" }); }
 function longDate(s) { return new Date(s + "T00:00:00").toLocaleDateString(lang === "ar" ? "ar-u-nu-latn" : "fr-FR", { day: "numeric", month: "long", year: "numeric" }); }
 
-/* ---- local library ---- */
+/* ---- local library (stored per access code, on this device only) ---- */
+const emptyLib = () => ({ quizzes: [], lessons: [], results: [] });
+function libKey() { return "yt_lib:" + String(safeGet("yt_code") || "").toUpperCase(); }
 function loadLib() {
-  try { const o = JSON.parse(safeGet("yt_lib") || "{}"); return { quizzes: o.quizzes || [], lessons: o.lessons || [], results: o.results || [] }; }
-  catch (e) { return { quizzes: [], lessons: [], results: [] }; }
+  if (!safeGet("yt_code")) return emptyLib();
+  try { const o = JSON.parse(safeGet(libKey()) || "{}"); return { quizzes: o.quizzes || [], lessons: o.lessons || [], results: o.results || [] }; }
+  catch (e) { return emptyLib(); }
 }
-let lib = loadLib();
+let lib = emptyLib();
 function saveLib() {
+  if (!safeGet("yt_code")) return;
   lib.quizzes = lib.quizzes.slice(0, 40); lib.lessons = lib.lessons.slice(0, 40); lib.results = lib.results.slice(0, 60);
-  safeSet("yt_lib", JSON.stringify(lib));
+  safeSet(libKey(), JSON.stringify(lib));
 }
 
 /* ---- markdown (safe: everything is escaped first) ---- */
@@ -475,6 +479,7 @@ async function login(code, auto) {
   }
 }
 function showApp() {
+  lib = loadLib();
   $("splash").hidden = true;
   $("app").hidden = false;
   tab = "home";
@@ -483,7 +488,7 @@ function showApp() {
   window.scrollTo(0, 0);
 }
 function logout() {
-  safeSet("yt_code", ""); me = null; quiz = null; lessonOpen = null;
+  safeSet("yt_code", ""); me = null; quiz = null; lessonOpen = null; lib = emptyLib();
   closeSheet("viewSheet"); closeSheet("createSheet");
   $("app").hidden = true; $("splash").hidden = false; $("codeIn").value = ""; splashMsg("", "");
   window.scrollTo(0, 0);
@@ -853,13 +858,14 @@ document.addEventListener("click", (e) => {
     case "copyLesson": navigator.clipboard.writeText(lessonOpen.text).then(() => { $("copyL").textContent = t.copied; setTimeout(() => { const b = $("copyL"); if (b) b.textContent = t.copy; }, 1500); }).catch(() => {}); break;
     case "printPage": window.print(); break;
     case "logout": logout(); break;
-    case "clearData": if (confirm(t.clearConfirm)) { lib = { quizzes: [], lessons: [], results: [] }; saveLib(); render(); } break;
+    case "clearData": if (confirm(t.clearConfirm)) { lib = emptyLib(); saveLib(); render(); } break;
   }
 });
 $("codeIn").addEventListener("keydown", (e) => { if (e.key === "Enter") $("enterBtn").click(); });
 
 /* ===================== start ===================== */
 (function init() {
+  try { localStorage.removeItem("yt_lib"); } catch (e) {}
   const sl = safeGet("yt_lang"); if (sl === "fr" || sl === "ar") lang = sl;
   applyLang();
   const saved = safeGet("yt_code");
