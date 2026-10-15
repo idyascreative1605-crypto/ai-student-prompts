@@ -69,7 +69,8 @@
         </div>
       </div>
       <div class="card made" id="made" hidden></div>
-      <div class="card"><label for="q">بحث</label><input id="q" placeholder="كود أو اسم"></div>
+      <div class="card"><label for="q">بحث</label><input id="q" placeholder="كود أو اسم">
+        <div class="actions"><button class="btn sm ghost" id="exportBtn" type="button">تصدير CSV (لـ Google Sheets)</button></div></div>
       <div id="codeList"></div>
     </div>
 
@@ -196,6 +197,26 @@ $("codeList").addEventListener("change", async (e) => {
   const code = s.closest("[data-code]").dataset.code;
   const d = await api("admin_update_code", { code, fields: { plan: s.value } }); if (d) { toast("تم تغيير الباقة"); refresh(); }
 });
+
+/* ---------- export (CSV opens in Google Sheets / Excel) ---------- */
+function csvCell(v) {
+  let t = String(v == null ? "" : v);
+  if (/^[=+\-@]/.test(t)) t = "'" + t;               // avoid spreadsheet formula injection
+  return '"' + t.replace(/"/g, '""') + '"';
+}
+$("exportBtn").onclick = () => {
+  const head = ["الكود", "الطالب", "الباقة", "الحالة", "ينتهي في", "اليوم", "الإجمالي", "تاريخ الإنشاء"];
+  const rows = data.codes.map((c) => [c.code, c.student || "", planLabel(c.plan),
+    !c.active ? "موقوف" : (c.expires_at && c.expires_at < data.today ? "منتهي" : "فعّال"),
+    c.expires_at || "", c.today, c.total, c.created_at]);
+  const csv = "\ufeff" + [head, ...rows].map((r) => r.map(csvCell).join(",")).join("\r\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+  a.download = "yestest-codes-" + data.today + ".csv";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1500);
+  toast("تم تنزيل الملف");
+};
 
 /* ---------- plans ---------- */
 function planCard(p, isNew) {
