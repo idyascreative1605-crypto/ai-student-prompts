@@ -50,6 +50,7 @@
   <section id="login" class="card">
     <label for="tok">رمز الإدارة (ADMIN_TOKEN)</label>
     <input id="tok" type="password" autocomplete="off" dir="ltr">
+    <label style="display:flex;gap:8px;align-items:center;margin-top:8px;font-weight:400"><input type="checkbox" id="showTok" style="width:auto"> إظهار الرمز (تأكد أن لوحة المفاتيح على English)</label>
     <div class="actions"><button class="btn" id="loginBtn" type="button">دخول</button></div>
     <p class="muted" id="loginMsg"></p>
   </section>
@@ -70,7 +71,7 @@
       </div>
       <div class="card made" id="made" hidden></div>
       <div class="card"><label for="q">بحث</label><input id="q" placeholder="كود أو اسم">
-        <div class="actions"><button class="btn sm ghost" id="exportBtn" type="button">تصدير CSV (لـ Google Sheets)</button></div></div>
+        <div class="actions"><button class="btn sm ghost" id="exportBtn" type="button">تصدير Excel (.xlsx)</button></div></div>
       <div id="codeList"></div>
     </div>
 
@@ -86,7 +87,7 @@ const MODE_LABEL = { qcs: "QCS", qcm: "QCM", summary: "تلخيص", memorize: "�
 const ALL_MODES = ["qcs", "qcm", "summary", "memorize", "review"];
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-let token = "", data = { plans: [], codes: [], today: "" };
+let token = "", data = { plans: [], codes: [], today: "" }, lastErr = null;
 
 function toast(msg, err) {
   const t = $("toast"); t.textContent = msg; t.className = "toast" + (err ? " err" : ""); t.hidden = false;
@@ -96,9 +97,9 @@ async function api(action, extra) {
   try {
     const res = await fetch(WORKER_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, token, ...(extra || {}) }) });
     const d = await res.json().catch(() => ({}));
-    if (!res.ok) { toast(d.error || "خطأ", true); return null; }
+    if (!res.ok) { lastErr = { status: res.status, reason: d.reason || "", error: d.error || "" }; toast(d.error || "خطأ", true); return null; }
     return d;
-  } catch (e) { toast("تعذّر الاتصال بالخدمة", true); return null; }
+  } catch (e) { lastErr = { status: 0, reason: "network" }; toast("تعذّر الاتصال بالخدمة", true); return null; }
 }
 async function refresh() {
   const d = await api("admin_overview"); if (!d) return false;
@@ -110,9 +111,17 @@ async function doLogin() {
   const ok = await refresh();
   $("loginBtn").disabled = false;
   if (ok) { try { sessionStorage.setItem("yt_admin", token); } catch (e) {} $("login").hidden = true; $("panel").hidden = false; $("logout").hidden = false; }
-  else $("loginMsg").textContent = "رمز غير صحيح أو الخدمة غير جاهزة.";
+  else {
+    const r = lastErr && lastErr.reason;
+    $("loginMsg").textContent =
+      r === "unauthorized" ? "الرمز غير صحيح. فعّل «إظهار الرمز» وتأكد من لغة لوحة المفاتيح (English) ومن عدم وجود حروف زائدة." :
+      r === "throttled" ? "محاولات خاطئة كثيرة اليوم. انتظر حتى الغد، أو صفّر العدّاد من قاعدة البيانات (انظر التعليمات)." :
+      r === "network" ? "تعذّر الاتصال بالخدمة. تحقق من الإنترنت." :
+      "الخدمة غير جاهزة (تحقق من ربط القاعدة DB ومن نشر الـ Worker).";
+  }
 }
 $("loginBtn").onclick = doLogin;
+$("showTok").onchange = (e) => { $("tok").type = e.target.checked ? "text" : "password"; };
 $("tok").addEventListener("keydown", (e) => { if (e.key === "Enter") doLogin(); });
 $("logout").onclick = () => { try { sessionStorage.removeItem("yt_admin"); } catch (e) {} location.reload(); };
 document.querySelectorAll(".tab").forEach((b) => b.onclick = () => {
@@ -198,21 +207,52 @@ $("codeList").addEventListener("change", async (e) => {
   const d = await api("admin_update_code", { code, fields: { plan: s.value } }); if (d) { toast("تم تغيير الباقة"); refresh(); }
 });
 
-/* ---------- export (CSV opens in Google Sheets / Excel) ---------- */
-function csvCell(v) {
-  let t = String(v == null ? "" : v);
-  if (/^[=+\-@]/.test(t)) t = "'" + t;               // avoid spreadsheet formula injection
-  return '"' + t.replace(/"/g, '""') + '"';
+/* ---------- export: real .xlsx (no libraries, opens correctly in any Excel / Google Sheets) ---------- */
+const CRC_T = (() => { const t = []; for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(b) { let c = 0xFFFFFFFF; for (let i = 0; i < b.length; i++) c = CRC_T[(c ^ b[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+function zipStore(files) {
+  const enc = new TextEncoder(), parts = [], central = []; let offset = 0;
+  const u16 = (n) => [n & 255, (n >> 8) & 255], u32 = (n) => [n & 255, (n >> 8) & 255, (n >> 16) & 255, (n >>> 24) & 255];
+  files.forEach((f) => {
+    const name = enc.encode(f.name), data = enc.encode(f.text), crc = crc32(data), size = data.length;
+    const local = new Uint8Array([0x50, 0x4b, 3, 4, ...u16(20), ...u16(0x0800), ...u16(0), ...u16(0), ...u16(0x21), ...u32(crc), ...u32(size), ...u32(size), ...u16(name.length), ...u16(0)]);
+    parts.push(local, name, data);
+    central.push(new Uint8Array([0x50, 0x4b, 1, 2, ...u16(20), ...u16(20), ...u16(0x0800), ...u16(0), ...u16(0), ...u16(0x21), ...u32(crc), ...u32(size), ...u32(size), ...u16(name.length), ...u16(0), ...u16(0), ...u16(0), ...u16(0), ...u32(0), ...u32(offset)]), name);
+    offset += local.length + name.length + data.length;
+  });
+  const cdSize = central.reduce((a, x) => a + x.length, 0);
+  const end = new Uint8Array([0x50, 0x4b, 5, 6, ...u16(0), ...u16(0), ...u16(files.length), ...u16(files.length), ...u32(cdSize), ...u32(offset), ...u16(0)]);
+  return new Blob([...parts, ...central, end], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+}
+const xmlEsc = (v) => String(v == null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+function colName(i) { return String.fromCharCode(65 + i); }
+function buildXlsx(head, rows) {
+  const cell = (v, r, c, style) => {
+    const ref = colName(c) + r, st = style ? ' s="1"' : "";
+    return typeof v === "number" ? `<c r="${ref}"${st}><v>${v}</v></c>` : `<c r="${ref}" t="inlineStr"${st}><is><t xml:space="preserve">${xmlEsc(v)}</t></is></c>`;
+  };
+  const all = [head, ...rows];
+  const sheetRows = all.map((row, i) => `<row r="${i + 1}">${row.map((v, c) => cell(v, i + 1, c, i === 0)).join("")}</row>`).join("");
+  const widths = [18, 22, 14, 10, 14, 8, 10, 20];
+  const X = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
+  const NS = 'xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"';
+  return zipStore([
+    { name: "[Content_Types].xml", text: X + '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>' },
+    { name: "_rels/.rels", text: X + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>' },
+    { name: "xl/workbook.xml", text: X + `<workbook ${NS} xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Codes" sheetId="1" r:id="rId1"/></sheets></workbook>` },
+    { name: "xl/_rels/workbook.xml.rels", text: X + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>' },
+    { name: "xl/styles.xml", text: X + `<styleSheet ${NS}><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>` },
+    { name: "xl/worksheets/sheet1.xml", text: X + `<worksheet ${NS}><sheetViews><sheetView workbookViewId="0" rightToLeft="1"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols>${widths.map((w, i) => `<col min="${i + 1}" max="${i + 1}" width="${w}" customWidth="1"/>`).join("")}</cols><sheetData>${sheetRows}</sheetData></worksheet>` }
+  ]);
 }
 $("exportBtn").onclick = () => {
   const head = ["الكود", "الطالب", "الباقة", "الحالة", "ينتهي في", "اليوم", "الإجمالي", "تاريخ الإنشاء"];
   const rows = data.codes.map((c) => [c.code, c.student || "", planLabel(c.plan),
     !c.active ? "موقوف" : (c.expires_at && c.expires_at < data.today ? "منتهي" : "فعّال"),
-    c.expires_at || "", c.today, c.total, c.created_at]);
-  const csv = "\ufeff" + [head, ...rows].map((r) => r.map(csvCell).join(",")).join("\r\n");
+    c.expires_at || "", Number(c.today) || 0, Number(c.total) || 0, c.created_at]);
   const a = document.createElement("a");
-  a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
-  a.download = "yestest-codes-" + data.today + ".csv";
+  a.href = URL.createObjectURL(buildXlsx(head, rows));
+  a.download = "yestest-codes-" + data.today + ".xlsx";
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 1500);
   toast("تم تنزيل الملف");
