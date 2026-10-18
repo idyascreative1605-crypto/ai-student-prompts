@@ -83,8 +83,8 @@
 <script>
 const WORKER_URL = "https://student-ai.idyascreative1605.workers.dev";
 const SITE_URL = "https://idyascreative1605-crypto.github.io/ai-student-prompts/";
-const MODE_LABEL = { qcs: "QCS", qcm: "QCM", summary: "تلخيص", memorize: "حفظ", review: "مراجعة" };
-const ALL_MODES = ["qcs", "qcm", "summary", "memorize", "review"];
+const MODE_LABEL = { qcs: "QCS", qcm: "QCM", summary: "تلخيص", memorize: "حفظ", review: "مراجعة", mindmap: "خريطة ذهنية", visual: "مخطط بصري", stickynotes: "ملاحظات لاصقة", handwritten: "بخط اليد" };
+const ALL_MODES = ["qcs", "qcm", "summary", "memorize", "review", "mindmap", "visual", "stickynotes", "handwritten"];
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 let token = "", data = { plans: [], codes: [], today: "" }, lastErr = null;
