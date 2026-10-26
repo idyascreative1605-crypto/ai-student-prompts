@@ -34,6 +34,9 @@
   .muted { color: var(--muted); font-size: 14px; }
   .pill { font-size: 12px; padding: 1px 9px; border-radius: 99px; background: #d3f0ef; color: var(--navy); }
   .pill.off { background: #fdecea; color: var(--bad); } .pill.exp { background: #fff0cc; color: #8a6400; }
+    .pill.ok { background: #dff3e4; color: var(--ok); } .pill.out { background: #ffe3c2; color: #8a4b00; font-weight: 700; }
+  .bar { height: 6px; border-radius: 99px; background: var(--line); overflow: hidden; margin-top: 6px; }
+  .bar i { display: block; height: 100%; background: var(--aqua); } .bar i.full { background: var(--orange); }
   .actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
   .toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 10px 18px; border-radius: 99px; z-index: 50; max-width: 90vw; }
   .toast.err { background: var(--bad); }
@@ -71,8 +74,7 @@
       </div>
       <div class="card made" id="made" hidden></div>
       <div class="card"><label for="q">بحث</label><input id="q" placeholder="كود أو اسم">
-        <div class="actions"><button class="btn sm ghost" id="exportBtn" type="button">تصدير Excel (.xlsx)</button></div></div>
-      <div id="codeList"></div>
+        <div class="actions"><button class="btn sm ghost" id="exportBtn" type="button">تصدير Excel (.xlsx)</button><button class="btn sm ghost" id="exhBtn" type="button">استنفدوا رصيدهم اليوم: 0</button></div></div>      <div id="codeList"></div>
     </div>
 
     <div id="plansTab" hidden></div>
@@ -140,13 +142,13 @@ function status(c) {
   if (c.expires_at && c.expires_at < data.today) return '<span class="pill exp">منتهي</span>';
   return '<span class="pill">فعّال</span>';
 }
-function renderCodes() {
+function limitOf(c) { if (c.daily_limit != null) return Number(c.daily_limit); const p = data.plans.find((x) => x.name === c.plan); return p && p.daily_limit != null ? Number(p.daily_limit) : null; } function isLive(c) { return c.active && !(c.expires_at && c.expires_at < data.today); } function isExh(c) { const L = limitOf(c); return isLive(c) && L != null && (Number(c.today) || 0) >= L; } function creditPill(c) { const L = limitOf(c); if (!isLive(c) || L == null) return ""; const left = Math.max(L - (Number(c.today) || 0), 0); return left === 0 ? '<span class="pill out">الرصيد اليومي منتهي</span>' : '<span class="pill ok">متبقٍّ ' + left + '</span>'; } function creditBar(c) { const L = limitOf(c); if (L == null || L === 0) return ""; const pct = Math.min(100, Math.round(((Number(c.today) || 0) / L) * 100)); return '<div class="bar"><i class="' + (pct >= 100 ? "full" : "") + '" style="width:' + pct + '%"></i></div>'; } let onlyExh = false; function renderCodes() {
   const q = $("q").value.trim().toLowerCase();
-  const list = data.codes.filter((c) => !q || c.code.toLowerCase().includes(q) || (c.student || "").toLowerCase().includes(q));
+  const n = data.codes.filter(isExh).length; document.getElementById("exhBtn").textContent = onlyExh ? "عرض الكل" : "استنفدوا رصيدهم اليوم: " + n; const list = data.codes.filter((c) => (!q || c.code.toLowerCase().includes(q) || (c.student || "").toLowerCase().includes(q)) && (!onlyExh || isExh(c)));
   $("codeList").innerHTML = list.length ? list.map((c) => `
     <div class="card" data-code="${esc(c.code)}">
-      <div class="row"><span class="code">${esc(c.code)}</span>${status(c)}</div>
-      <div class="muted">${esc(c.student || "بدون اسم")} · ${c.expires_at ? "ينتهي " + esc(c.expires_at) : "بدون انتهاء"} · اليوم ${c.today} · الإجمالي ${c.total}</div>
+      <div class="row"><span class="code">${esc(c.code)}</span><span>${status(c)} ${creditPill(c)}</span></div>
+      <div class="muted">${esc(c.student || "بدون اسم")} · ${c.expires_at ? "ينتهي " + esc(c.expires_at) : "بدون انتهاء"} · اليوم ${c.today}${limitOf(c) != null ? " من " + limitOf(c) : ""} · الإجمالي ${c.total}</div>${creditBar(c)}
       <div class="grid" style="margin-top:8px">
         <div><label>الباقة</label><select data-f="plan">${data.plans.map((p) => `<option value="${esc(p.name)}" ${p.name === c.plan ? "selected" : ""}>${esc(p.label)}</option>`).join("")}</select></div>
       </div>
@@ -165,7 +167,7 @@ function renderCodes() {
       </div>
     </div>`).join("") : '<div class="card muted">لا توجد أكواد.</div>';
 }
-$("q").addEventListener("input", renderCodes);
+$("q").addEventListener("input", renderCodes); document.getElementById("exhBtn").onclick = () => { onlyExh = !onlyExh; renderCodes(); };
 
 function message(c) {
   const exp = c.expires_at ? "صالح حتى: " + c.expires_at : "بدون تاريخ انتهاء";
