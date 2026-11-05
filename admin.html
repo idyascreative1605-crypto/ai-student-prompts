@@ -22,6 +22,8 @@
   .btn.orange { background: var(--orange); border-color: var(--orange); color: #1d2a30; }
   .btn.sm { padding: 4px 10px; font-size: 14px; }
   .btn[disabled] { opacity: .5; }
+  textarea { font: inherit; color: var(--ink); background: #fff; border: 1.5px solid var(--line); border-radius: 10px; padding: 8px 10px; width: 100%; resize: vertical; line-height: 1.6; }
+  .savebar { position: sticky; bottom: 0; background: linear-gradient(transparent, var(--bg) 30%); padding: 14px 0 6px; display: flex; gap: 8px; flex-wrap: wrap; }
   input, select { font: inherit; color: var(--ink); background: #fff; border: 1.5px solid var(--line); border-radius: 10px; padding: 8px 10px; width: 100%; }
   label { display: block; font-weight: 500; font-size: 14px; margin-bottom: 3px; }
   .card { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; margin-top: 14px; }
@@ -34,9 +36,6 @@
   .muted { color: var(--muted); font-size: 14px; }
   .pill { font-size: 12px; padding: 1px 9px; border-radius: 99px; background: #d3f0ef; color: var(--navy); }
   .pill.off { background: #fdecea; color: var(--bad); } .pill.exp { background: #fff0cc; color: #8a6400; }
-    .pill.ok { background: #dff3e4; color: var(--ok); } .pill.out { background: #ffe3c2; color: #8a4b00; font-weight: 700; }
-  .bar { height: 6px; border-radius: 99px; background: var(--line); overflow: hidden; margin-top: 6px; }
-  .bar i { display: block; height: 100%; background: var(--aqua); } .bar i.full { background: var(--orange); }
   .actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
   .toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 10px 18px; border-radius: 99px; z-index: 50; max-width: 90vw; }
   .toast.err { background: var(--bad); }
@@ -59,7 +58,7 @@
   </section>
 
   <section id="panel" hidden>
-    <div class="tabs"><button class="tab on" data-tab="codes" type="button">الأكواد</button><button class="tab" data-tab="plans" type="button">الباقات</button></div>
+    <div class="tabs"><button class="tab on" data-tab="codes" type="button">الأكواد</button><button class="tab" data-tab="plans" type="button">الباقات</button><button class="tab" data-tab="content" type="button">المحتوى</button></div>
 
     <div id="codesTab">
       <div class="card">
@@ -74,10 +73,12 @@
       </div>
       <div class="card made" id="made" hidden></div>
       <div class="card"><label for="q">بحث</label><input id="q" placeholder="كود أو اسم">
-        <div class="actions"><button class="btn sm ghost" id="exportBtn" type="button">تصدير Excel (.xlsx)</button><button class="btn sm ghost" id="exhBtn" type="button">استنفدوا رصيدهم اليوم: 0</button></div></div>      <div id="codeList"></div>
+        <div class="actions"><button class="btn sm ghost" id="exportBtn" type="button">تصدير Excel (.xlsx)</button></div></div>
+      <div id="codeList"></div>
     </div>
 
     <div id="plansTab" hidden></div>
+    <div id="contentTab" hidden></div>
   </section>
 </div>
 <div class="toast" id="toast" hidden></div>
@@ -128,7 +129,8 @@ $("tok").addEventListener("keydown", (e) => { if (e.key === "Enter") doLogin(); 
 $("logout").onclick = () => { try { sessionStorage.removeItem("yt_admin"); } catch (e) {} location.reload(); };
 document.querySelectorAll(".tab").forEach((b) => b.onclick = () => {
   document.querySelectorAll(".tab").forEach((x) => x.classList.toggle("on", x === b));
-  $("codesTab").hidden = b.dataset.tab !== "codes"; $("plansTab").hidden = b.dataset.tab !== "plans";
+  $("codesTab").hidden = b.dataset.tab !== "codes"; $("plansTab").hidden = b.dataset.tab !== "plans"; $("contentTab").hidden = b.dataset.tab !== "content";
+  if (b.dataset.tab === "content" && !cdata) loadContentAdmin();
 });
 
 const planLabel = (n) => { const p = data.plans.find((x) => x.name === n); return p ? p.label : n; };
@@ -142,20 +144,20 @@ function status(c) {
   if (c.expires_at && c.expires_at < data.today) return '<span class="pill exp">منتهي</span>';
   return '<span class="pill">فعّال</span>';
 }
-function limitOf(c) { if (c.daily_limit != null) return Number(c.daily_limit); const p = data.plans.find((x) => x.name === c.plan); return p && p.daily_limit != null ? Number(p.daily_limit) : null; } function isLive(c) { return c.active && !(c.expires_at && c.expires_at < data.today); } function isExh(c) { const L = limitOf(c); return isLive(c) && L != null && (Number(c.today) || 0) >= L; } function creditPill(c) { const L = limitOf(c); if (!isLive(c) || L == null) return ""; const left = Math.max(L - (Number(c.today) || 0), 0); return left === 0 ? '<span class="pill out">الرصيد اليومي منتهي</span>' : '<span class="pill ok">متبقٍّ ' + left + '</span>'; } function creditBar(c) { const L = limitOf(c); if (L == null || L === 0) return ""; const pct = Math.min(100, Math.round(((Number(c.today) || 0) / L) * 100)); return '<div class="bar"><i class="' + (pct >= 100 ? "full" : "") + '" style="width:' + pct + '%"></i></div>'; } let onlyExh = false; function renderCodes() {
+function renderCodes() {
   const q = $("q").value.trim().toLowerCase();
-  const n = data.codes.filter(isExh).length; document.getElementById("exhBtn").textContent = onlyExh ? "عرض الكل" : "استنفدوا رصيدهم اليوم: " + n; const list = data.codes.filter((c) => (!q || c.code.toLowerCase().includes(q) || (c.student || "").toLowerCase().includes(q)) && (!onlyExh || isExh(c)));
+  const list = data.codes.filter((c) => !q || c.code.toLowerCase().includes(q) || (c.student || "").toLowerCase().includes(q));
   $("codeList").innerHTML = list.length ? list.map((c) => `
     <div class="card" data-code="${esc(c.code)}">
-      <div class="row"><span class="code">${esc(c.code)}</span><span>${status(c)} ${creditPill(c)}</span></div>
-      <div class="muted">${esc(c.student || "بدون اسم")} · ${c.expires_at ? "ينتهي " + esc(c.expires_at) : "بدون انتهاء"} · اليوم ${c.today}${limitOf(c) != null ? " من " + limitOf(c) : ""} · الإجمالي ${c.total}</div>${creditBar(c)}
+      <div class="row"><span class="code">${esc(c.code)}</span>${status(c)}</div>
+      <div class="muted">${esc(c.student || "بدون اسم")} · ${c.expires_at ? "ينتهي " + esc(c.expires_at) : "بدون انتهاء"} · اليوم ${c.today} · الإجمالي ${c.total}</div>
       <div class="grid" style="margin-top:8px">
         <div><label>الباقة</label><select data-f="plan">${data.plans.map((p) => `<option value="${esc(p.name)}" ${p.name === c.plan ? "selected" : ""}>${esc(p.label)}</option>`).join("")}</select></div>
       </div>
       <details><summary>تخصيص هذا الكود</summary>
         <div class="grid" style="margin-top:6px">
           <div><label>أقصى أسئلة (فارغ = حسب الباقة)</label><input data-f="max_questions" type="number" min="1" max="100" value="${c.max_questions == null ? "" : c.max_questions}"></div>
-          <div><label>الرصيد اليومي (فارغ = حسب الباقة)</label><input data-f="daily_limit" type="number" min="0" max="1000" value="${c.daily_limit == null ? "" : c.daily_limit}"></div>
+          <div><label>عدد مرات الاستخدام (فارغ = حسب الباقة)</label><input data-f="daily_limit" type="number" min="0" max="1000" value="${c.daily_limit == null ? "" : c.daily_limit}"></div>
           <div><button class="btn sm" data-do="saveOverride" type="button">حفظ التخصيص</button></div>
         </div></details>
       <div class="actions">
@@ -167,7 +169,7 @@ function limitOf(c) { if (c.daily_limit != null) return Number(c.daily_limit); c
       </div>
     </div>`).join("") : '<div class="card muted">لا توجد أكواد.</div>';
 }
-$("q").addEventListener("input", renderCodes); document.getElementById("exhBtn").onclick = () => { onlyExh = !onlyExh; renderCodes(); };
+$("q").addEventListener("input", renderCodes);
 
 function message(c) {
   const exp = c.expires_at ? "صالح حتى: " + c.expires_at : "بدون تاريخ انتهاء";
@@ -260,16 +262,70 @@ $("exportBtn").onclick = () => {
   toast("تم تنزيل الملف");
 };
 
+/* ---------- site content (about, features, offers, contact, ChatGPT prompts) ---------- */
+let cdata = null;
+const ta = (label, p, v, rows) => `<div style="margin-top:8px"><label>${label}</label><textarea data-p="${p}" rows="${rows || 3}">${esc(v)}</textarea></div>`;
+const inp = (label, p, v) => `<div><label>${label}</label><input data-p="${p}" value="${esc(v)}"></div>`;
+async function loadContentAdmin() {
+  const d = await api("content");
+  if (d && d.content) { cdata = d.content; renderContent(); }
+}
+function offerEd(o, i) {
+  const f = (label, k, v) => `<div><label>${label}</label><input data-f="${k}" value="${esc(v)}"></div>`;
+  const fa = (label, k, v) => `<div style="grid-column:1/-1"><label>${label}</label><textarea data-f="${k}" rows="4">${esc(v)}</textarea></div>`;
+  return `<div class="card offer-ed" data-i="${i}"><div class="row"><b>عرض ${i + 1}</b><button class="btn sm warn" data-do="delOffer" type="button">حذف</button></div>
+    <div class="grid" style="margin-top:8px">${f("العنوان (عربي)", "title.ar", o.title.ar)}${f("Titre (FR)", "title.fr", o.title.fr)}${f("السعر (عربي)", "price.ar", o.price.ar)}${f("Prix (FR)", "price.fr", o.price.fr)}${f("شارة، مثل: الأكثر طلباً", "badge.ar", o.badge.ar)}${f("Badge (FR)", "badge.fr", o.badge.fr)}
+    ${fa("المزايا (عربي) — كل ميزة في سطر", "perks.ar", o.perks.ar)}${fa("Avantages (FR) — un par ligne", "perks.fr", o.perks.fr)}</div>
+    <label style="display:flex;gap:8px;align-items:center;margin-top:8px;font-weight:400"><input type="checkbox" data-f="highlight" style="width:auto" ${o.highlight ? "checked" : ""}> تمييز هذا العرض (إطار برتقالي)</label></div>`;
+}
+function renderContent() {
+  const c = cdata;
+  let h = `<div class="card"><b>نبذة عن التطبيق</b>${ta("بالعربية", "about.ar", c.about.ar, 4)}${ta("Français", "about.fr", c.about.fr, 4)}</div>`;
+  h += `<div class="card"><b>المزايا</b><p class="muted">اكتب كل ميزة في سطر مستقل.</p>${ta("بالعربية", "features.ar", c.features.ar, 7)}${ta("Français", "features.fr", c.features.fr, 7)}</div>`;
+  h += `<div class="card"><b>الاشتراكات (العروض)</b><p class="muted">تظهر للطالب في صفحة «الاشتراكات والمزايا». لا تنسَ كتابة الأسعار الفعلية.</p><div id="offersBox">${c.offers.map(offerEd).join("")}</div><button class="btn sm ghost" data-do="addOffer" type="button">+ إضافة عرض</button></div>`;
+  h += `<div class="card"><b>التواصل للاشتراك</b><div class="grid" style="margin-top:8px">${inp("رابط واتساب (يبدأ بـ https://)", "contact_url", c.contact_url)}${inp("نص الزر (عربي)", "contact_text.ar", c.contact_text.ar)}${inp("Texte du bouton (FR)", "contact_text.fr", c.contact_text.fr)}</div><p class="muted">مثال الرابط: https://wa.me/213XXXXXXXXX</p></div>`;
+  h += `<div class="card"><b>برومتات ChatGPT (تظهر بعد التلخيص)</b><p class="muted">اكتب <b dir="ltr">{{SUMMARY}}</b> في المكان الذي سيُدرج فيه الملخص تلقائياً.</p>
+    ${ta("خريطة ذهنية — عربي", "prompts.mindmap.ar", c.prompts.mindmap.ar, 9)}${ta("Carte mentale — FR", "prompts.mindmap.fr", c.prompts.mindmap.fr, 9)}
+    ${ta("قصاصات — عربي", "prompts.notes.ar", c.prompts.notes.ar, 7)}${ta("Fiches post-it — FR", "prompts.notes.fr", c.prompts.notes.fr, 7)}</div>`;
+  h += `<div class="savebar"><button class="btn orange" data-do="saveContent" type="button">حفظ التغييرات</button><button class="btn ghost" data-do="resetContent" type="button">استعادة النصوص الافتراضية</button></div>`;
+  $("contentTab").innerHTML = h;
+}
+function collectContent() {
+  const root = $("contentTab"), g = (p) => { const el = root.querySelector(`[data-p="${p}"]`); return el ? el.value : ""; };
+  const offers = [...root.querySelectorAll(".offer-ed")].map((el) => {
+    const f = (k) => el.querySelector(`[data-f="${k}"]`).value;
+    return { title: { ar: f("title.ar"), fr: f("title.fr") }, price: { ar: f("price.ar"), fr: f("price.fr") }, badge: { ar: f("badge.ar"), fr: f("badge.fr") },
+      perks: { ar: f("perks.ar"), fr: f("perks.fr") }, highlight: el.querySelector('[data-f="highlight"]').checked };
+  });
+  return { about: { ar: g("about.ar"), fr: g("about.fr") }, features: { ar: g("features.ar"), fr: g("features.fr") }, offers,
+    contact_url: g("contact_url"), contact_text: { ar: g("contact_text.ar"), fr: g("contact_text.fr") },
+    prompts: { mindmap: { ar: g("prompts.mindmap.ar"), fr: g("prompts.mindmap.fr") }, notes: { ar: g("prompts.notes.ar"), fr: g("prompts.notes.fr") } } };
+}
+$("contentTab").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-do]"); if (!b) return;
+  const act = b.dataset.do;
+  if (act === "addOffer") { cdata = collectContent(); if (cdata.offers.length >= 6) return toast("الحد الأقصى 6 عروض", true); cdata.offers.push({ title: { ar: "", fr: "" }, price: { ar: "", fr: "" }, badge: { ar: "", fr: "" }, perks: { ar: "", fr: "" }, highlight: false }); renderContent(); }
+  else if (act === "delOffer") { const i = +b.closest(".offer-ed").dataset.i; cdata = collectContent(); cdata.offers.splice(i, 1); renderContent(); }
+  else if (act === "saveContent") {
+    const url = collectContent().contact_url.trim();
+    if (url && !/^https?:\/\//i.test(url)) return toast("رابط التواصل يجب أن يبدأ بـ https://", true);
+    b.disabled = true; const d = await api("admin_save_content", { content: collectContent() }); b.disabled = false;
+    if (d && d.content) { cdata = d.content; renderContent(); toast("تم الحفظ، وتظهر التغييرات للطلبة فوراً"); }
+  }
+  else if (act === "resetContent") { if (confirm("استعادة كل النصوص الافتراضية؟ ستضيع تعديلاتك.")) { const d = await api("admin_reset_content"); if (d && d.content) { cdata = d.content; renderContent(); toast("تمت الاستعادة"); } } }
+});
+
 /* ---------- plans ---------- */
 function planCard(p, isNew) {
   const modes = isNew ? ["summary", "qcm", "qcs"] : String(p.modes || "").split(",");
   return `<div class="card" data-plan="${esc(p.name || "")}">
-    <div class="row"><b>${isNew ? "باقة جديدة" : esc(p.label) + " · " + esc(p.name)}</b></div>
+    <div class="row"><b>${isNew ? "باقة جديدة" : esc(p.label) + " · " + esc(p.name) + (p.quota_type === "total" ? " (تجربة)" : "")}</b></div>
     <div class="grid" style="margin-top:8px">
       ${isNew ? `<div><label>الاسم الداخلي (لاتيني)</label><input data-f="name" dir="ltr" placeholder="plus"></div>` : ""}
       <div><label>الاسم الظاهر</label><input data-f="label" value="${esc(p.label || "")}"></div>
       <div><label>أقصى عدد أسئلة</label><input data-f="max_questions" type="number" min="1" max="100" value="${p.max_questions ?? 5}"></div>
-      <div><label>الرصيد اليومي</label><input data-f="daily_limit" type="number" min="0" max="1000" value="${p.daily_limit ?? 5}"></div>
+      <div><label>عدد مرات الاستخدام</label><input data-f="daily_limit" type="number" min="0" max="1000" value="${p.daily_limit ?? 5}"></div>
+      <div><label>نوع الرصيد</label><select data-f="quota_type"><option value="daily" ${p.quota_type !== "total" ? "selected" : ""}>يومي (يتجدد كل يوم)</option><option value="total" ${p.quota_type === "total" ? "selected" : ""}>إجمالي (تجربة مرة واحدة)</option></select></div>
       <div><label>أقصى حجم ملف (ميغا)</label><input data-f="max_file_mb" type="number" min="1" max="20" value="${p.max_file_mb ?? 5}"></div>
     </div>
     <div class="modes" style="margin-top:10px">${ALL_MODES.map((m) => `<label><input type="checkbox" data-m="${m}" ${modes.includes(m) ? "checked" : ""}>${MODE_LABEL[m]}</label>`).join("")}</div>
@@ -283,7 +339,7 @@ $("plansTab").addEventListener("click", async (e) => {
   const card = b.closest("[data-plan]"), g = (f) => { const el = card.querySelector(`[data-f=${f}]`); return el ? el.value : undefined; };
   const name = card.dataset.plan || g("name");
   const modes = [...card.querySelectorAll("[data-m]")].filter((x) => x.checked).map((x) => x.dataset.m).join(",");
-  const d = await api("admin_save_plan", { plan: { name, label: g("label"), max_questions: g("max_questions"), daily_limit: g("daily_limit"), max_file_mb: g("max_file_mb"), modes } });
+  const d = await api("admin_save_plan", { plan: { name, label: g("label"), max_questions: g("max_questions"), daily_limit: g("daily_limit"), quota_type: g("quota_type"), max_file_mb: g("max_file_mb"), modes } });
   if (d) { toast("تم حفظ الباقة"); refresh(); }
 });
 

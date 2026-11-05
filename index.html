@@ -185,6 +185,22 @@
 
 
   .ac.t5 { background: #ece4fb; } .ac.t6 { background: #fde3ea; } .ac.t7 { background: #fff3c4; } .ac.t8 { background: #e4e9f2; }
+  .paywall { background: linear-gradient(135deg, #fff3d6, #ffe0b8); border: 1.5px solid #f2b45a; border-radius: 16px; padding: 16px; margin-bottom: 16px; text-align: center; }
+  .paywall h2 { font-size: 20px; margin-bottom: 4px; } .paywall p { margin: 4px 0; }
+  .srcbar { margin-top: 6px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .srcbar .linkbtn { color: var(--teal); }
+  .feat { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+  .feat li { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 9px 12px 9px 12px; display: flex; gap: 10px; align-items: flex-start; }
+  .feat li::before { content: "✓"; flex: none; width: 22px; height: 22px; border-radius: 50%; background: var(--teal); color: #fff; display: grid; place-items: center; font-size: 13px; font-weight: 700; margin-top: 2px; }
+  .offers { display: grid; gap: 12px; }
+  .offer { position: relative; background: #fff; border: 1.5px solid var(--line); border-radius: 16px; padding: 16px; }
+  .offer.hl { border-color: var(--orange); box-shadow: 0 6px 18px rgba(253, 163, 1, .22); }
+  .offer h3 { font-size: 18px; margin: 0 0 2px; } .offer .oprice { font-size: 22px; font-weight: 700; color: var(--teal); margin-bottom: 6px; }
+  .offer ul { margin: 0; padding-inline-start: 1.2em; } .offer li { margin: .15em 0; }
+  .obadge { position: absolute; top: -11px; inset-inline-end: 14px; background: var(--orange); color: #1d2a30; font-size: 12px; font-weight: 700; padding: 1px 12px; border-radius: 99px; }
+  .gpt { margin-top: 18px; background: #eef7f7; border: 1.5px dashed var(--teal); border-radius: 14px; padding: 12px 14px; }
+  .gpt h3 { margin: 0 0 4px; font-size: 17px; }
+  .samesrc { margin-top: 18px; } .samesrc .lbl { font-size: 14px; color: var(--muted); }
   /* visual learning */
   .mmwrap { overflow: auto; border: 1px solid var(--line); border-radius: 14px; background: #fff; margin-top: 8px; -webkit-overflow-scrolling: touch; }
   .mmwrap svg { display: block; }
@@ -230,6 +246,7 @@
     <button id="enterBtn" class="pill" type="button" data-act="enter"></button>
     <div id="splashMsg" class="smsg" role="status" aria-live="polite"></div>
     <a id="getCode" class="getcode" href="#" target="_blank" rel="noopener" hidden data-i="getCode"></a>
+    <button class="getcode" data-act="about" type="button" data-i="aboutLink" style="background:none;border:0;width:100%;cursor:pointer;font:inherit"></button>
   </div>
 </section>
 
@@ -267,6 +284,7 @@
       <div class="field">
         <label class="lbl" for="fText" data-i="textLabel"></label>
         <textarea class="in" id="fText"></textarea>
+        <div class="srcbar" id="srcBar" hidden><span class="muted" data-i="srcKeep"></span> <button class="linkbtn" data-act="newSource" type="button" data-i="newSource"></button></div>
       </div>
 
       <div class="field" id="styleField">
@@ -289,6 +307,7 @@
         <label class="check"><input type="checkbox" id="fExam"><span><b data-i="examTitle"></b><br><span class="muted" data-i="examHint"></span></span></label>
       </div>
 
+      <div id="createPay"></div>
       <p class="muted" id="remainLine"></p>
       <button class="btn big orange" id="createGo" data-act="createGo" type="button" style="margin-top:10px"></button>
       <div class="msg" id="createMsg" role="status" aria-live="polite"></div>
@@ -304,9 +323,17 @@
   </div>
 </section>
 
+<section id="aboutSheet" class="sheet" hidden>
+  <div class="sheet-inner">
+    <div class="sheet-head"><button class="back" data-act="closeAbout" type="button" data-i="back"></button><h2 data-i="aboutTitle"></h2></div>
+    <div class="sheet-body" id="aboutBody"></div>
+  </div>
+</section>
+
 <script>
 /* ===================== settings ===================== */
 const WORKER_URL = "https://student-ai.idyascreative1605.workers.dev";
+let content = null;
 const CONTACT_URL = "";   // اختياري: رابط واتساب لطلب كود، مثل https://wa.me/213XXXXXXXXX
 const LET = "ABCDE";
 const MODES = ["qcs", "qcm", "summary", "memorize", "review", "mindmap", "visual", "stickynotes", "handwritten"];
@@ -320,7 +347,7 @@ const T = {
     codeLabel: "أدخل كود الاشتراك", enter: "ابدأ الآن", verifying: "جارٍ التحقق…", getCode: "ليس لديك كود؟ احصل عليه",
     tHome: "الرئيسية", tQuizzes: "اختبارات", tLessons: "دروسي", tProfile: "ملفي",
     hello: "مرحباً {n}", hello0: "مرحباً بك", homeSub: "ابدأ رحلتك نحو التميز الآن",
-    planLbl: "باقتك", todayLeft: "المتبقي اليوم", expires: "ينتهي في", noExpiry: "بدون تاريخ انتهاء", maxQ: "أقصى عدد أسئلة",
+    planLbl: "باقتك", todayLeft: "المتبقي اليوم", trialLeft: "رصيد التجربة المتبقي", payTitle: "انتهت تجربتك المجانية", payText: "أعجبك التطبيق؟ اشترك في النسخة المتقدمة لتواصل: كل الأوضاع، وأسئلة أكثر، ورصيد يومي متجدد.", payBtn: "اشترك الآن", payNoLink: "للاشتراك تواصل مع المسؤول.", dayOver: "انتهى رصيد اليوم، يتجدد غداً.", expires: "ينتهي في", noExpiry: "بدون تاريخ انتهاء", maxQ: "أقصى عدد أسئلة",
     quick: "ماذا تريد أن تفعل؟", visualTitle: "تعلّم بصرياً", aMap: "خريطة ذهنية", aMapS: "فروع سهلة الحفظ", aVis: "مخطط بصري", aVisS: "بطاقات وأيقونات وخطوات", aSticky: "ملاحظات لاصقة", aStickyS: "بطاقات مختصرة", aHand: "بخط اليد", aHandS: "دفتر مراجعة مرتب",
     mapDl: "تحميل صورة PNG", mapHint: "مرّر الخريطة يميناً ويساراً لرؤيتها كاملة.", stepsTitle: "التسلسل", tipLbl: "حيلة", remLbl: "للتذكّر",
     aQuiz: "ابدأ اختباراً", aQuizS: "QCM أو QCS من درسك", aSum: "لخّص درساً", aSumS: "ملخص منظم وواضح",
@@ -329,9 +356,9 @@ const T = {
     myQuizzes: "اختباراتي", newQuiz: "اختبار جديد", noQuizzes: "لا توجد اختبارات محفوظة بعد.", start: "ابدأ", del: "حذف", qs: "سؤال", results: "النتائج",
     myLessons: "دروسي", newLesson: "درس جديد", noLessons: "لا توجد دروس محفوظة بعد.", open: "فتح",
     savedNote: "تُحفظ الدروس والاختبارات والنتائج على هذا الجهاز فقط. إعادة الاختبار المحفوظ لا تستهلك رصيدك.",
-    plan: "الباقة", usedToday: "رصيد اليوم", lang: "اللغة", logout: "تسجيل الخروج", clearData: "مسح بيانات الجهاز", clearConfirm: "سيتم مسح الدروس والاختبارات والنتائج من هذا الجهاز. متابعة؟",
+    plan: "الباقة", usedToday: "رصيد اليوم", usedTrial: "رصيد التجربة", lang: "اللغة", logout: "تسجيل الخروج", clearData: "مسح بيانات الجهاز", clearConfirm: "سيتم مسح الدروس والاختبارات والنتائج من هذا الجهاز. متابعة؟",
     installTip: "لتثبيت YES TEST كتطبيق: من قائمة المتصفح اختر «إضافة إلى الشاشة الرئيسية».",
-    back: "رجوع", createTitle: "إنشاء جديد", modeLabel: "ماذا تريد؟",
+    back: "رجوع", createTitle: "إنشاء جديد", aboutLink: "تعرّف على التطبيق والاشتراكات", aboutTitle: "عن YES TEST", aboutFail: "تعذّر تحميل المعلومات. تحقق من الإنترنت.", featuresTitle: "المزايا", offersTitle: "الاشتراكات", seeOffers: "عرض الاشتراكات", profAbout: "الاشتراكات والمزايا", srcKeep: "الملف أو النص الحالي يبقى عند تغيير الوضع.", newSource: "درس جديد (مسح الملف والنص)", sameSource: "جرّب الدرس نفسه بوضع آخر", gptTitle: "حوّل هذا الملخص في ChatGPT", gptHint: "انسخ البرومت والصقه في محادثتك مع ChatGPT، وهو يتضمن الملخص جاهزاً.", gptMap: "نسخ برومت الخريطة الذهنية", gptNotes: "نسخ برومت القصاصات", gptOpen: "فتح ChatGPT", copiedShort: "تم النسخ ✓", modeLabel: "ماذا تريد؟",
     modes: { qcs: "QCS (اختيار واحد)", qcm: "QCM (اختيار متعدد)", summary: "تلخيص", memorize: "حفظ", review: "مراجعة", mindmap: "خريطة ذهنية", visual: "مخطط بصري", stickynotes: "ملاحظات لاصقة", handwritten: "بخط اليد" },
     fileLabel: "ملف الدرس", drop: "اختر ملف PDF أو صورة", textLabel: "أو ألصق نص الدرس هنا", removeFile: "إزالة الملف",
     styleLabel: "نموذج امتحان سابق (اختياري)", styleHint: "يستعمله النموذج لمحاكاة أسلوب أسئلة الأستاذ فقط، دون نسخ أسئلته.", styleDrop: "اختر نموذج امتحان (PDF أو صورة)",
@@ -339,11 +366,11 @@ const T = {
     levelLabel: "المستوى", levels: { easy: "سهل", medium: "متوسط", hard: "صعب" },
     outLang: "لغة الناتج", langs: { auto: "نفس لغة الدرس", ar: "العربية", fr: "Français" },
     examTitle: "وضع الامتحان", examHint: "بدون تصحيح فوري، ومع مؤقّت دقيقة لكل سؤال.",
-    remainLine: "رصيدك اليوم: {a} من {b}", go: "ابدأ", wait: "جارٍ التحضير، قد يستغرق دقيقة…", locked: "هذا الوضع متاح في الباقة المتقدمة.",
+    remainLine: "رصيدك اليوم: {a} من {b}", remainTrial: "رصيد التجربة: {a} من {b}", go: "ابدأ", wait: "جارٍ التحضير، قد يستغرق دقيقة…", locked: "هذا الوضع متاح في الباقة المتقدمة.",
     eEmpty: "ارفع ملفاً أو ألصق نصاً.", eBig: "الملف أكبر من {n} ميغا.", eType: "صيغة غير مدعومة. استخدم PDF أو صورة أو ملفاً نصياً.",
     eNet: "تعذّر الاتصال بالخدمة. تحقق من الإنترنت وأعد المحاولة.", eGen: "حدث خطأ أثناء المعالجة. أعد المحاولة بعد قليل.",
     eNoCode: "أدخل كود الاشتراك.", eInvalid: "كود الاشتراك غير صحيح.", eInactive: "هذا الكود موقوف. تواصل مع المسؤول.", eExpired: "انتهى اشتراكك بتاريخ {d}.",
-    eThrottled: "محاولات كثيرة. حاول لاحقاً.", eQuota: "انتهى رصيدك لهذا اليوم. يتجدد غداً.", eMode: "هذا الوضع غير متاح في باقتك.",
+    eThrottled: "محاولات كثيرة. حاول لاحقاً.", eQuota: "انتهى رصيدك لهذا اليوم. يتجدد غداً.", eQuotaTotal: "انتهت تجربتك المجانية. للمتابعة اشترك في النسخة المتقدمة.", eMode: "هذا الوضع غير متاح في باقتك.",
     eToobig: "الملف أكبر من المسموح في باقتك ({n} ميغا).", eModel: "تعذّر الإنشاء، ولم يُخصم من رصيدك. أعد المحاولة.", eServer: "الخدمة غير جاهزة حالياً. حاول لاحقاً.",
     qn: "سؤال {a} من {b}", hintM: "اختر كل الإجابات الصحيحة", hintS: "اختر إجابة واحدة", hintExam: "وضع الامتحان: لن يظهر التصحيح إلا في النهاية.",
     check: "تحقق", next: "التالي", finish: "عرض النتيجة", okA: "إجابة صحيحة", partA: "إجابة جزئية", badA: "إجابة خاطئة",
@@ -358,7 +385,7 @@ const T = {
     codeLabel: "Entrez votre code d’abonnement", enter: "Commencer", verifying: "Vérification…", getCode: "Pas de code ? Obtenez-en un",
     tHome: "Accueil", tQuizzes: "Quiz", tLessons: "Cours", tProfile: "Profil",
     hello: "Bonjour {n}", hello0: "Bienvenue", homeSub: "Commencez votre chemin vers l’excellence",
-    planLbl: "Votre formule", todayLeft: "Restant aujourd’hui", expires: "Expire le", noExpiry: "Sans date d’expiration", maxQ: "Questions max",
+    planLbl: "Votre formule", todayLeft: "Restant aujourd’hui", trialLeft: "Crédit d’essai restant", payTitle: "Votre essai gratuit est terminé", payText: "L’appli vous plaît ? Passez à la formule avancée : tous les modes, plus de questions et un crédit quotidien renouvelé.", payBtn: "S’abonner", payNoLink: "Pour vous abonner, contactez l’administrateur.", dayOver: "Crédit du jour épuisé, il revient demain.", expires: "Expire le", noExpiry: "Sans date d’expiration", maxQ: "Questions max",
     quick: "Que voulez-vous faire ?", visualTitle: "Apprendre en images", aMap: "Carte mentale", aMapS: "Branches faciles à retenir", aVis: "Fiche visuelle", aVisS: "Cartes, icônes et étapes", aSticky: "Post-it", aStickyS: "Fiches courtes", aHand: "Manuscrit", aHandS: "Cahier de révision soigné",
     mapDl: "Télécharger en PNG", mapHint: "Faites défiler la carte pour la voir en entier.", stepsTitle: "Étapes", tipLbl: "Astuce", remLbl: "À retenir",
     aQuiz: "Lancer un quiz", aQuizS: "QCM ou QCS de votre cours", aSum: "Résumer un cours", aSumS: "Résumé structuré et clair",
@@ -367,9 +394,9 @@ const T = {
     myQuizzes: "Mes quiz", newQuiz: "Nouveau quiz", noQuizzes: "Aucun quiz enregistré.", start: "Lancer", del: "Supprimer", qs: "questions", results: "Résultats",
     myLessons: "Mes cours", newLesson: "Nouveau cours", noLessons: "Aucun cours enregistré.", open: "Ouvrir",
     savedNote: "Les cours, quiz et résultats sont enregistrés sur cet appareil uniquement. Refaire un quiz enregistré ne consomme pas votre crédit.",
-    plan: "Formule", usedToday: "Crédit du jour", lang: "Langue", logout: "Se déconnecter", clearData: "Effacer les données de l’appareil", clearConfirm: "Les cours, quiz et résultats de cet appareil seront effacés. Continuer ?",
+    plan: "Formule", usedToday: "Crédit du jour", usedTrial: "Crédit d’essai", lang: "Langue", logout: "Se déconnecter", clearData: "Effacer les données de l’appareil", clearConfirm: "Les cours, quiz et résultats de cet appareil seront effacés. Continuer ?",
     installTip: "Pour installer YES TEST comme une appli : menu du navigateur, puis « Ajouter à l’écran d’accueil ».",
-    back: "Retour", createTitle: "Nouveau", modeLabel: "Que voulez-vous ?",
+    back: "Retour", createTitle: "Nouveau", aboutLink: "Découvrir l’application et les abonnements", aboutTitle: "À propos de YES TEST", aboutFail: "Impossible de charger les informations. Vérifiez votre connexion.", featuresTitle: "Avantages", offersTitle: "Abonnements", seeOffers: "Voir les abonnements", profAbout: "Abonnements et avantages", srcKeep: "Le fichier ou le texte actuel est conservé quand vous changez de mode.", newSource: "Nouveau cours (effacer fichier et texte)", sameSource: "Essayez le même cours dans un autre mode", gptTitle: "Transformez ce résumé dans ChatGPT", gptHint: "Copiez le prompt et collez-le dans votre conversation ChatGPT ; il contient déjà le résumé.", gptMap: "Copier le prompt carte mentale", gptNotes: "Copier le prompt fiches post-it", gptOpen: "Ouvrir ChatGPT", copiedShort: "Copié ✓", modeLabel: "Que voulez-vous ?",
     modes: { qcs: "QCS (choix unique)", qcm: "QCM (choix multiple)", summary: "Résumé", memorize: "Mémoriser", review: "Réviser", mindmap: "Carte mentale", visual: "Fiche visuelle", stickynotes: "Post-it", handwritten: "Notes manuscrites" },
     fileLabel: "Fichier du cours", drop: "Choisir un PDF ou une image", textLabel: "Ou collez le texte du cours ici", removeFile: "Retirer le fichier",
     styleLabel: "Ancien sujet d’examen (facultatif)", styleHint: "Sert uniquement à imiter le style des questions du professeur, sans copier ses questions.", styleDrop: "Choisir un sujet (PDF ou image)",
@@ -377,11 +404,11 @@ const T = {
     levelLabel: "Niveau", levels: { easy: "Facile", medium: "Moyen", hard: "Difficile" },
     outLang: "Langue du résultat", langs: { auto: "Même langue que le cours", ar: "العربية", fr: "Français" },
     examTitle: "Mode examen", examHint: "Sans correction immédiate, avec un minuteur d’une minute par question.",
-    remainLine: "Crédit du jour : {a} sur {b}", go: "Lancer", wait: "Préparation en cours, cela peut prendre une minute…", locked: "Ce mode est disponible dans la formule avancée.",
+    remainLine: "Crédit du jour : {a} sur {b}", remainTrial: "Crédit d’essai : {a} sur {b}", go: "Lancer", wait: "Préparation en cours, cela peut prendre une minute…", locked: "Ce mode est disponible dans la formule avancée.",
     eEmpty: "Importez un fichier ou collez du texte.", eBig: "Le fichier dépasse {n} Mo.", eType: "Format non pris en charge. Utilisez un PDF, une image ou un fichier texte.",
     eNet: "Connexion impossible. Vérifiez votre internet et réessayez.", eGen: "Une erreur est survenue. Réessayez dans un instant.",
     eNoCode: "Saisissez votre code d’abonnement.", eInvalid: "Code d’abonnement incorrect.", eInactive: "Ce code est suspendu. Contactez l’administrateur.", eExpired: "Votre abonnement a expiré le {d}.",
-    eThrottled: "Trop de tentatives. Réessayez plus tard.", eQuota: "Votre crédit du jour est épuisé. Il revient demain.", eMode: "Ce mode n’est pas disponible dans votre formule.",
+    eThrottled: "Trop de tentatives. Réessayez plus tard.", eQuota: "Votre crédit du jour est épuisé. Il revient demain.", eQuotaTotal: "Votre essai gratuit est terminé. Passez à la formule avancée pour continuer.", eMode: "Ce mode n’est pas disponible dans votre formule.",
     eToobig: "Fichier trop volumineux pour votre formule ({n} Mo).", eModel: "Échec de la génération, votre crédit n’a pas été débité. Réessayez.", eServer: "Service indisponible pour le moment. Réessayez plus tard.",
     qn: "Question {a} sur {b}", hintM: "Cochez toutes les bonnes réponses", hintS: "Choisissez une seule réponse", hintExam: "Mode examen : la correction n’apparaît qu’à la fin.",
     check: "Valider", next: "Suivant", finish: "Voir le résultat", okA: "Bonne réponse", partA: "Réponse partielle", badA: "Mauvaise réponse",
@@ -393,6 +420,10 @@ const T = {
 };
 
 /* ===================== state ===================== */
+const FALLBACK_PROMPTS = {
+  mindmap: { ar: "حوّل الملخص التالي إلى خريطة ذهنية احترافية سهلة الحفظ (فروع رئيسية وفرعية بعبارات قصيرة وألوان مختلفة)، واعتمد عليه فقط:\n\n{{SUMMARY}}", fr: "Transforme le résumé suivant en une carte mentale professionnelle facile à mémoriser (branches courtes, couleurs différentes), sans rien ajouter :\n\n{{SUMMARY}}" },
+  notes: { ar: "حوّل الملخص التالي إلى قصاصات (بطاقات لاصقة) ملوّنة: عنوان قصير و2 إلى 4 نقاط وحيلة حفظ لكل قصاصة، واعتمد عليه فقط:\n\n{{SUMMARY}}", fr: "Transforme le résumé suivant en fiches post-it colorées : titre court, 2 à 4 points et une astuce de mémorisation par fiche, sans rien ajouter :\n\n{{SUMMARY}}" }
+};
 let lang = "ar";
 let me = null;               // session info from the server
 let tab = "home";
@@ -452,7 +483,7 @@ function applyLang() {
   $("langSplash").textContent = t.toggle;
   $("enterBtn").textContent = t.enter;
   $("createGo").textContent = t.go;
-  if (CONTACT_URL) { $("getCode").href = CONTACT_URL; $("getCode").hidden = false; }
+  syncContactLink();
   $("dropLessonText").textContent = fileLesson ? fileLesson.name : t.drop;
   $("dropStyleText").textContent = fileStyle ? fileStyle.name : t.styleDrop;
   $("fLevel").innerHTML = ["easy", "medium", "hard"].map((k) => `<option value="${k}" ${k === "medium" ? "selected" : ""}>${t.levels[k]}</option>`).join("");
@@ -474,7 +505,7 @@ function errText(data) {
     case "inactive": return t.eInactive;
     case "expired": return fmt(t.eExpired, { d: data.expiresAt ? longDate(data.expiresAt) : "" });
     case "throttled": return t.eThrottled;
-    case "quota": return t.eQuota;
+    case "quota": return data.quotaType === "total" ? t.eQuotaTotal : t.eQuota;
     case "mode": return t.eMode;
     case "toobig": return fmt(t.eToobig, { n: data.maxFileMb || "" });
     case "empty": return t.eEmpty;
@@ -517,7 +548,8 @@ function showApp() {
 }
 function logout() {
   safeSet("yt_code", ""); me = null; quiz = null; lessonOpen = null; lib = emptyLib();
-  closeSheet("viewSheet"); closeSheet("createSheet");
+  fileLesson = null; fileStyle = null; $("fText").value = ""; $("fFile").value = ""; $("fStyle").value = "";
+  closeSheet("viewSheet"); closeSheet("createSheet"); closeSheet("aboutSheet");
   $("app").hidden = true; $("splash").hidden = false; $("codeIn").value = ""; splashMsg("", "");
   window.scrollTo(0, 0);
 }
@@ -534,6 +566,26 @@ const ICON = {
   rev: '<svg class="ic" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>'
 };
 
+const isTrial = () => me && me.quotaType === "total";
+function paywallCard() {
+  const t = tx();
+  if (!me || me.remaining > 0) return "";
+  if (!isTrial()) return `<div class="card" style="margin-bottom:14px;text-align:center">${t.dayOver}</div>`;
+  const u = contactUrl();
+  const label = (content && loc(content.contact_text)) || t.payBtn;
+  const btn = u ? `<a class="btn orange big" style="display:block;text-decoration:none;margin-top:10px" href="${esc(u)}" target="_blank" rel="noopener">${esc(label)}</a>` : `<p class="muted" style="margin-top:8px">${t.payNoLink}</p>`;
+  return `<div class="paywall"><h2>${t.payTitle}</h2><p>${t.payText}</p>${btn}<button class="btn ghost big" style="margin-top:8px" data-act="about" data-arg="offers" type="button">${t.seeOffers}</button></div>`;
+}
+function contactUrl() { const u = (content && content.contact_url) || CONTACT_URL || ""; return /^https?:\/\//i.test(u) ? u : ""; }
+const loc = (o) => (o && (o[lang] || o.ar || o.fr)) || "";
+const lines = (txt) => String(txt || "").split("\n").map((x) => x.trim()).filter(Boolean);
+function syncContactLink() {
+  const u = contactUrl(), el = $("getCode");
+  if (u) { el.href = u; el.hidden = false; } else el.hidden = true;
+}
+async function loadContent() {
+  try { const r = await api({ action: "content" }); if (r.ok && r.data && r.data.content) { content = r.data.content; syncContactLink(); } } catch (e) {}
+}
 function planBadge() {
   if (!me) return;
   $("planBadge").textContent = `${me.label} · ${me.remaining}/${me.dailyLimit}`;
@@ -560,9 +612,10 @@ function viewHome() {
   const t = tx(), st = stats();
   const pct = me.dailyLimit ? Math.max(0, Math.min(100, (me.remaining / me.dailyLimit) * 100)) : 0;
   let h = `<h1 class="hello">${me.student ? fmt(t.hello, { n: esc(me.student) }) : t.hello0}</h1><p class="hello-sub">${t.homeSub}</p>`;
-  h += `<div class="card plancard"><div class="plan-row"><span class="plan-name">${esc(me.label)}</span><span class="muted">${t.todayLeft}: <b>${me.remaining}</b> / ${me.dailyLimit}</span></div>
+  h += paywallCard();
+  h += `<div class="card plancard"><div class="plan-row"><span class="plan-name">${esc(me.label)}</span><span class="muted">${isTrial() ? t.trialLeft : t.todayLeft}: <b>${me.remaining}</b> / ${me.dailyLimit}</span></div>
         <div class="meter"><i style="width:${pct}%"></i></div>
-        <div class="plan-row muted"><span>${t.maxQ}: ${me.maxQuestions}</span><span>${me.expiresAt ? t.expires + " " + longDate(me.expiresAt) : t.noExpiry}</span></div></div>`;
+        <div class="plan-row muted"><span>${t.maxQ}: ${me.maxQuestions}</span><span>${me.expiresAt ? t.expires + " " + longDate(me.expiresAt) : t.noExpiry}</span></div><button class="linkbtn" data-act="about" data-arg="offers" type="button" style="color:var(--teal);text-align:start;padding:0">${t.profAbout} ›</button></div>`;
   h += `<h2 class="sec" style="margin-top:0">${t.quick}</h2><div class="grid2">
     <button class="ac t1" data-act="create" data-arg="qcs" type="button"><span class="ico">${ICON.quiz}</span><b>${t.aQuiz}</b><small>${t.aQuizS}</small></button>
     <button class="ac t2" data-act="create" data-arg="summary" type="button"><span class="ico">${ICON.sum}</span><b>${t.aSum}</b><small>${t.aSumS}</small></button>
@@ -616,11 +669,12 @@ function viewProfile() {
   return `<div class="card" style="text-align:center"><div class="avatar">${esc(ini)}</div><h1 class="hello" style="font-size:21px">${esc(me.student || "YES TEST")}</h1></div>
     <div class="card" style="margin-top:12px">
       <div class="kv"><span>${t.plan}</span><b>${esc(me.label)}</b></div>
-      <div class="kv"><span>${t.usedToday}</span><b>${me.remaining} / ${me.dailyLimit}</b></div>
+      <div class="kv"><span>${isTrial() ? t.usedTrial : t.usedToday}</span><b>${me.remaining} / ${me.dailyLimit}</b></div>
       <div class="kv"><span>${t.maxQ}</span><b>${me.maxQuestions}</b></div>
       <div class="kv"><span>${t.expires}</span><b>${me.expiresAt ? longDate(me.expiresAt) : t.noExpiry}</b></div>
       <div class="kv"><span>${t.lang}</span><button class="btn ghost" data-act="lang" type="button">${t.toggle}</button></div></div>
     <div class="stack" style="margin-top:12px">
+      <button class="btn big" data-act="about" data-arg="offers" type="button">${t.profAbout}</button>
       <button class="btn ghost big" data-act="clearData" type="button">${t.clearData}</button>
       <button class="btn warn big" data-act="logout" type="button">${t.logout}</button></div>
     <p class="muted" style="margin-top:14px">${t.installTip}</p>`;
@@ -628,16 +682,64 @@ function viewProfile() {
 
 /* ===================== create sheet ===================== */
 function openSheet(id) { $(id).hidden = false; $(id).scrollTop = 0; document.body.classList.add("noscroll"); }
-function closeSheet(id) { $(id).hidden = true; if ($("createSheet").hidden && $("viewSheet").hidden) document.body.classList.remove("noscroll"); }
+function closeSheet(id) { $(id).hidden = true; if (!document.querySelector(".sheet:not([hidden])")) document.body.classList.remove("noscroll"); }
 const isQuizMode = (m) => m === "qcm" || m === "qcs";
+
+function openAbout(toOffers) {
+  openSheet("aboutSheet"); renderAbout();
+  if (toOffers) { const a = $("offersAnchor"); if (a) $("aboutSheet").scrollTop = a.offsetTop - 60; }
+}
+function renderAbout() {
+  const t = tx(), c = content;
+  if (!c) { $("aboutBody").innerHTML = `<p class="empty">${t.aboutFail}</p>`; return; }
+  let h = `<div style="text-align:center"><img src="logo.png" alt="YES TEST" style="width:min(280px,80%);height:auto"></div>`;
+  const about = loc(c.about); if (about) h += `<p style="margin:12px 0;white-space:pre-line">${esc(about)}</p>`;
+  const feats = lines(loc(c.features));
+  if (feats.length) h += `<h2 class="sec">${t.featuresTitle}</h2><ul class="feat">${feats.map((x) => `<li><span>${esc(x)}</span></li>`).join("")}</ul>`;
+  const offers = (c.offers || []).filter((o) => loc(o.title));
+  if (offers.length) {
+    h += `<h2 class="sec" id="offersAnchor">${t.offersTitle}</h2><div class="offers">` + offers.map((o) =>
+      `<div class="offer ${o.highlight ? "hl" : ""}">${loc(o.badge) ? `<span class="obadge">${esc(loc(o.badge))}</span>` : ""}<h3>${esc(loc(o.title))}</h3><div class="oprice">${esc(loc(o.price))}</div><ul>${lines(loc(o.perks)).map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>`).join("") + `</div>`;
+  }
+  const u = contactUrl(), label = loc(c.contact_text) || t.payBtn;
+  h += u ? `<a class="btn orange big" style="display:block;text-decoration:none;margin-top:18px;text-align:center" href="${esc(u)}" target="_blank" rel="noopener">${esc(label)}</a>`
+         : (loc(c.contact_text) ? `<p class="muted" style="margin-top:14px;text-align:center">${esc(loc(c.contact_text))}</p>` : "");
+  $("aboutBody").innerHTML = h;
+}
+
+/* ---- keep the lesson file/text while switching modes ---- */
+const hasSource = () => !!fileLesson || ($("fText").value.trim().length > 0);
+function updateSrcBar() { $("srcBar").hidden = !(hasSource() || fileStyle); }
+function sameSourceBar(exceptMode) {
+  if (!me || !hasSource()) return "";
+  const t = tx(), ms = me.modes.filter((m) => m !== exceptMode);
+  if (!ms.length) return "";
+  return `<div class="samesrc no-print"><div class="lbl">${t.sameSource}</div><div class="chips">${ms.map((m) => `<button type="button" class="chip" data-act="srcMode" data-arg="${m}">${t.modes[m]}</button>`).join("")}</div></div>`;
+}
+function buildPrompt(kind, text) {
+  const tpl = (content && content.prompts && content.prompts[kind] && (content.prompts[kind][lang] || content.prompts[kind].ar)) || FALLBACK_PROMPTS[kind][lang];
+  return tpl.indexOf("{{SUMMARY}}") >= 0 ? tpl.split("{{SUMMARY}}").join(text) : tpl + "\n\n" + text;
+}
+function gptBlock() {
+  const t = tx();
+  return `<div class="gpt no-print"><h3>${t.gptTitle}</h3><p class="muted">${t.gptHint}</p><div class="qactions"><button class="btn" data-act="copyPrompt" data-arg="mindmap" type="button">${t.gptMap}</button><button class="btn" data-act="copyPrompt" data-arg="notes" type="button">${t.gptNotes}</button><a class="btn ghost" href="https://chatgpt.com/" target="_blank" rel="noopener" style="text-decoration:none">${t.gptOpen}</a></div></div>`;
+}
 
 function openCreate(mode) {
   form.mode = me.modes.includes(mode) ? mode : (me.modes[0] || "summary");
-  clearFile("lesson"); clearFile("style"); $("fText").value = ""; $("createMsg").className = "msg"; $("fExam").checked = false;
-  buildForm(); openSheet("createSheet");
+  $("createMsg").className = "msg"; $("fExam").checked = false;
+  syncDrops(); buildForm(); openSheet("createSheet");
 }
+function setDrop(slot, f) {
+  const S = slot === "lesson" ? "Lesson" : "Style";
+  $("drop" + S).classList.toggle("has", !!f);
+  $("drop" + S + "Text").textContent = f ? f.name : (slot === "lesson" ? tx().drop : tx().styleDrop);
+  $("clear" + S).hidden = !f;
+}
+function syncDrops() { setDrop("lesson", fileLesson); setDrop("style", fileStyle); }
 function buildForm() {
   if (!me) return;
+  updateSrcBar();
   const t = tx();
   $("fModes").innerHTML = MODES.map((m) => {
     const locked = !me.modes.includes(m);
@@ -648,7 +750,8 @@ function buildForm() {
   $("fCount").max = me.maxQuestions;
   $("fCount").value = Math.min(parseInt($("fCount").value, 10) || 5, me.maxQuestions);
   $("countHint").textContent = fmt(t.countHint, { n: me.maxQuestions });
-  $("remainLine").textContent = fmt(t.remainLine, { a: me.remaining, b: me.dailyLimit });
+  $("remainLine").textContent = fmt(isTrial() ? t.remainTrial : t.remainLine, { a: me.remaining, b: me.dailyLimit });
+  $("createPay").innerHTML = paywallCard();
   $("createGo").disabled = busy || me.remaining <= 0;
 }
 function createMsg(kind, text) { const el = $("createMsg"); el.className = "msg " + kind; el.textContent = text; }
@@ -676,12 +779,15 @@ async function onPick(slot, input) {
   if (slot === "lesson") fileLesson = res.file; else fileStyle = res.file;
   const s = slot === "lesson" ? "Lesson" : "Style";
   $("drop" + s).classList.add("has"); $("drop" + s + "Text").textContent = res.file.name; $("clear" + s).hidden = false;
+  updateSrcBar();
 }
 function clearFile(slot) {
   const s = slot === "lesson" ? "Lesson" : "Style";
   if (slot === "lesson") { fileLesson = null; $("fFile").value = ""; } else { fileStyle = null; $("fStyle").value = ""; }
   $("drop" + s).classList.remove("has"); $("drop" + s + "Text").textContent = slot === "lesson" ? tx().drop : tx().styleDrop; $("clear" + s).hidden = true;
+  updateSrcBar();
 }
+$("fText").addEventListener("input", updateSrcBar);
 $("fFile").addEventListener("change", (e) => onPick("lesson", e.target));
 $("fStyle").addEventListener("change", (e) => onPick("style", e.target));
 
@@ -706,7 +812,7 @@ async function createGo() {
   busy = true; $("createGo").disabled = true; createMsg("wait", t.wait);
   try {
     const r = await api(body), d = r.data;
-    if (typeof d.remaining === "number") { me.remaining = d.remaining; if (d.dailyLimit) me.dailyLimit = d.dailyLimit; planBadge(); }
+    if (typeof d.remaining === "number") { me.remaining = d.remaining; if (d.dailyLimit) me.dailyLimit = d.dailyLimit; if (d.quotaType) me.quotaType = d.quotaType; planBadge(); }
     if (r.ok && Array.isArray(d.quiz) && d.quiz.length) {
       const title = autoTitle(mode);
       const rec = { id: String(Date.now()), t: Date.now(), mode, title, items: d.quiz };
@@ -725,6 +831,7 @@ async function createGo() {
       openLesson(rec.id);
     } else {
       createMsg("err", errText(d));
+      if (d.reason === "quota") { me.remaining = 0; if (d.quotaType) me.quotaType = d.quotaType; planBadge(); render(); }
       if (d.reason === "expired" || d.reason === "inactive") setTimeout(logout, 1800);
     }
   } catch (e) {
@@ -841,7 +948,8 @@ function renderLesson() {
   else body = `<div class="md">${md(l.text || "")}</div>`;
   const actions = l.mode === "mindmap" ? "" :
     `<div class="qactions no-print"><button class="btn" data-act="copyLesson" id="copyL" type="button">${t.copy}</button><button class="btn ghost" data-act="printPage" type="button">${t.print}</button></div>`;
-  $("viewBody").innerHTML = body + actions + `<p class="muted no-print" style="margin-top:12px">${t.checkNote}</p>`;
+  const textual = !["mindmap", "stickynotes", "visual"].includes(l.mode) && l.text;
+  $("viewBody").innerHTML = body + actions + (textual ? gptBlock() : "") + sameSourceBar(l.mode) + `<p class="muted no-print" style="margin-top:12px">${t.checkNote}</p>`;
 }
 
 /* ===================== quiz player ===================== */
@@ -959,6 +1067,7 @@ function renderSummary() {
     h += `<h2 class="sec">${t.toReview}</h2>`;
     wrong.forEach(({ it, r }) => { h += `<div class="rev"><p><strong>${esc(it.q)}</strong></p><p class="bad-t">${t.yourAns}: ${ansText(it, r.sel)}</p><p class="ok-t">${t.goodAns}: ${ansText(it, it.correct)}</p>${it.explanation ? `<p>${esc(it.explanation)}</p>` : ""}</div>`; });
   }
+  h += sameSourceBar(quiz.mode);
   h += `<div class="qactions">`;
   if (wrong.length) h += `<button class="btn" data-act="retry" type="button">${t.retry}</button>`;
   h += `<button class="btn ghost" data-act="again" type="button">${t.again}</button><button class="btn ghost" data-act="closeView" type="button">${t.done}</button></div>`;
@@ -995,6 +1104,11 @@ document.addEventListener("click", (e) => {
     case "again": startQuiz(quiz.items.map((x) => x.raw), quiz.mode, { title: quiz.title, retry: true }); break;
     case "copyLesson": navigator.clipboard.writeText(plainText(lessonOpen)).then(() => { $("copyL").textContent = t.copied; setTimeout(() => { const b = $("copyL"); if (b) b.textContent = t.copy; }, 1500); }).catch(() => {}); break;
     case "printPage": window.print(); break;
+    case "about": openAbout(arg === "offers"); break;
+    case "closeAbout": closeSheet("aboutSheet"); break;
+    case "newSource": clearFile("lesson"); clearFile("style"); $("fText").value = ""; updateSrcBar(); break;
+    case "srcMode": stopTimer(); quiz = null; lessonOpen = null; closeSheet("viewSheet"); render(); openCreate(arg); break;
+    case "copyPrompt": navigator.clipboard.writeText(buildPrompt(arg, (lessonOpen && lessonOpen.text) || "")).then(() => { const old = el.textContent; el.textContent = t.copiedShort; setTimeout(() => { el.textContent = old; }, 1600); }).catch(() => {}); break;
     case "mapPng": downloadMindmap(); break;
     case "logout": logout(); break;
     case "clearData": if (confirm(t.clearConfirm)) { lib = emptyLib(); saveLib(); render(); } break;
@@ -1007,6 +1121,7 @@ $("codeIn").addEventListener("keydown", (e) => { if (e.key === "Enter") $("enter
   try { localStorage.removeItem("yt_lib"); } catch (e) {}
   const sl = safeGet("yt_lang"); if (sl === "fr" || sl === "ar") lang = sl;
   applyLang();
+  loadContent().then(() => { if (!$("aboutSheet").hidden) renderAbout(); });
   const saved = safeGet("yt_code");
   if (saved) { $("codeIn").value = saved; login(saved, true); }
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(function () {});
