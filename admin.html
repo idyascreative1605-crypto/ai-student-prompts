@@ -42,6 +42,7 @@
   .made { border: 2px solid var(--ok); background: #f1faf3; }
   .modes { display: flex; gap: 12px; flex-wrap: wrap; } .modes label { display: flex; gap: 6px; align-items: center; font-weight: 400; margin: 0; }
   .modes input { width: auto; accent-color: var(--teal); }
+  table.vt { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 6px; } table.vt th, table.vt td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: start; } table.vt td.n { font-variant-numeric: tabular-nums; }
   details summary { cursor: pointer; color: var(--teal); font-size: 14px; margin-top: 8px; }
 </style>
 </head>
@@ -278,17 +279,27 @@ function offerEd(o, i) {
     ${fa("المزايا (عربي) — كل ميزة في سطر", "perks.ar", o.perks.ar)}${fa("Avantages (FR) — un par ligne", "perks.fr", o.perks.fr)}</div>
     <label style="display:flex;gap:8px;align-items:center;margin-top:8px;font-weight:400"><input type="checkbox" data-f="highlight" style="width:auto" ${o.highlight ? "checked" : ""}> تمييز هذا العرض (إطار برتقالي)</label></div>`;
 }
+async function loadVisits() {
+  const d = await api("admin_visits"); const box = $("visitsBox"); if (!box) return;
+  if (!d) return;
+  const pct = (a, b) => (b ? Math.round((a / b) * 100) + "%" : "—");
+  box.innerHTML = d.refs.length ? `<table class="vt"><tr><th>الرابط (ref)</th><th>زيارات: اليوم / 7 أيام / الكل</th><th>طلبات واتساب</th><th>نسبة</th></tr>` +
+    d.refs.map((r) => `<tr><td dir="ltr">${esc(r.ref)}</td><td class="n">${r.visitsToday} / ${r.visits7} / ${r.visits}</td><td class="n">${r.wa}</td><td class="n">${pct(r.wa, r.visits)}</td></tr>`).join("") + `</table>` : '<p class="muted">لا زيارات مسجّلة بعد.</p>';
+}
 function renderContent() {
   const c = cdata;
-  let h = `<div class="card"><b>نبذة عن التطبيق</b>${ta("بالعربية", "about.ar", c.about.ar, 4)}${ta("Français", "about.fr", c.about.fr, 4)}</div>`;
+  let h = `<div class="card"><b>الزيارات وطلبات واتساب</b><p class="muted">أضف <b dir="ltr">?ref=اسم</b> لأي رابط تنشره، مثل <b dir="ltr">?ref=fb</b> أو <b dir="ltr">?ref=tg</b>، فتعرف أي قناة تجلب أكثر. والرمز المضاف إلى الصور يستعمل <b dir="ltr">?ref=share</b>.</p><div id="visitsBox"><p class="muted">…</p></div></div>`;
+  h += `<div class="card"><b>نبذة عن التطبيق</b>${ta("بالعربية", "about.ar", c.about.ar, 4)}${ta("Français", "about.fr", c.about.fr, 4)}</div>`;
   h += `<div class="card"><b>المزايا</b><p class="muted">اكتب كل ميزة في سطر مستقل.</p>${ta("بالعربية", "features.ar", c.features.ar, 7)}${ta("Français", "features.fr", c.features.fr, 7)}</div>`;
   h += `<div class="card"><b>الاشتراكات (العروض)</b><p class="muted">تظهر للطالب في صفحة «الاشتراكات والمزايا». لا تنسَ كتابة الأسعار الفعلية.</p><div id="offersBox">${c.offers.map(offerEd).join("")}</div><button class="btn sm ghost" data-do="addOffer" type="button">+ إضافة عرض</button></div>`;
   h += `<div class="card"><b>التواصل للاشتراك</b><div class="grid" style="margin-top:8px">${inp("رابط واتساب (يبدأ بـ https://)", "contact_url", c.contact_url)}${inp("نص الزر (عربي)", "contact_text.ar", c.contact_text.ar)}${inp("Texte du bouton (FR)", "contact_text.fr", c.contact_text.fr)}</div><p class="muted">مثال الرابط: https://wa.me/213XXXXXXXXX</p></div>`;
   h += `<div class="card"><b>برومتات ChatGPT (تظهر بعد التلخيص)</b><p class="muted">اكتب <b dir="ltr">{{SUMMARY}}</b> في المكان الذي سيُدرج فيه الملخص تلقائياً.</p>
     ${ta("خريطة ذهنية — عربي", "prompts.mindmap.ar", c.prompts.mindmap.ar, 9)}${ta("Carte mentale — FR", "prompts.mindmap.fr", c.prompts.mindmap.fr, 9)}
-    ${ta("قصاصات — عربي", "prompts.notes.ar", c.prompts.notes.ar, 7)}${ta("Fiches post-it — FR", "prompts.notes.fr", c.prompts.notes.fr, 7)}</div>`;
+    ${ta("قصاصات — عربي", "prompts.notes.ar", c.prompts.notes.ar, 7)}${ta("Fiches post-it — FR", "prompts.notes.fr", c.prompts.notes.fr, 7)}
+    ${ta("إنفوغرافيك مصوّر — عربي", "prompts.infographic.ar", c.prompts.infographic.ar, 10)}${ta("Infographie — FR", "prompts.infographic.fr", c.prompts.infographic.fr, 10)}</div>`;
   h += `<div class="savebar"><button class="btn orange" data-do="saveContent" type="button">حفظ التغييرات</button><button class="btn ghost" data-do="resetContent" type="button">استعادة النصوص الافتراضية</button></div>`;
   $("contentTab").innerHTML = h;
+  loadVisits();
 }
 function collectContent() {
   const root = $("contentTab"), g = (p) => { const el = root.querySelector(`[data-p="${p}"]`); return el ? el.value : ""; };
@@ -299,7 +310,7 @@ function collectContent() {
   });
   return { about: { ar: g("about.ar"), fr: g("about.fr") }, features: { ar: g("features.ar"), fr: g("features.fr") }, offers,
     contact_url: g("contact_url"), contact_text: { ar: g("contact_text.ar"), fr: g("contact_text.fr") },
-    prompts: { mindmap: { ar: g("prompts.mindmap.ar"), fr: g("prompts.mindmap.fr") }, notes: { ar: g("prompts.notes.ar"), fr: g("prompts.notes.fr") } } };
+    prompts: { mindmap: { ar: g("prompts.mindmap.ar"), fr: g("prompts.mindmap.fr") }, notes: { ar: g("prompts.notes.ar"), fr: g("prompts.notes.fr") }, infographic: { ar: g("prompts.infographic.ar"), fr: g("prompts.infographic.fr") } } };
 }
 $("contentTab").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-do]"); if (!b) return;

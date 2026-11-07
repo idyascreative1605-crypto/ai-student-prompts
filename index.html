@@ -323,6 +323,17 @@
   </div>
 </section>
 
+<section id="stampSheet" class="sheet" hidden>
+  <div class="sheet-inner">
+    <div class="sheet-head"><button class="back" data-act="closeStamp" type="button" data-i="back"></button><h2 data-i="stampTitle"></h2></div>
+    <div class="sheet-body">
+      <p data-i="stampHelp"></p>
+      <label class="drop" style="margin-top:12px"><input type="file" id="stampFile" accept="image/*"><span data-i="stampPick"></span></label>
+      <div id="stampOut" style="margin-top:14px"></div>
+    </div>
+  </div>
+</section>
+
 <section id="aboutSheet" class="sheet" hidden>
   <div class="sheet-inner">
     <div class="sheet-head"><button class="back" data-act="closeAbout" type="button" data-i="back"></button><h2 data-i="aboutTitle"></h2></div>
@@ -358,7 +369,7 @@ const T = {
     savedNote: "تُحفظ الدروس والاختبارات والنتائج على هذا الجهاز فقط. إعادة الاختبار المحفوظ لا تستهلك رصيدك.",
     plan: "الباقة", usedToday: "رصيد اليوم", usedTrial: "رصيد التجربة", lang: "اللغة", logout: "تسجيل الخروج", clearData: "مسح بيانات الجهاز", clearConfirm: "سيتم مسح الدروس والاختبارات والنتائج من هذا الجهاز. متابعة؟",
     installTip: "لتثبيت YES TEST كتطبيق: من قائمة المتصفح اختر «إضافة إلى الشاشة الرئيسية».",
-    back: "رجوع", createTitle: "إنشاء جديد", aboutLink: "تعرّف على التطبيق والاشتراكات", aboutTitle: "عن YES TEST", aboutFail: "تعذّر تحميل المعلومات. تحقق من الإنترنت.", featuresTitle: "المزايا", offersTitle: "الاشتراكات", seeOffers: "عرض الاشتراكات", profAbout: "الاشتراكات والمزايا", srcKeep: "الملف أو النص الحالي يبقى عند تغيير الوضع.", newSource: "درس جديد (مسح الملف والنص)", sameSource: "جرّب الدرس نفسه بوضع آخر", gptTitle: "حوّل هذا الملخص في ChatGPT", gptHint: "انسخ البرومت والصقه في محادثتك مع ChatGPT، وهو يتضمن الملخص جاهزاً.", gptMap: "نسخ برومت الخريطة الذهنية", gptNotes: "نسخ برومت القصاصات", gptOpen: "فتح ChatGPT", copiedShort: "تم النسخ ✓", modeLabel: "ماذا تريد؟",
+    back: "رجوع", createTitle: "إنشاء جديد", haveCode: "لدي كود اشتراك", orderOffer: "اطلب هذا العرض عبر واتساب", waMsg: "مرحباً، أريد الاشتراك في YES TEST: العرض «{offer}» ({price}).", gptInfo: "نسخ برومت الإنفوغرافيك", stampBtn: "أضف علامة YES TEST للصورة", stampTitle: "ختم الصورة بعلامة YES TEST", stampHelp: "الصق برومت الإنفوغرافيك في ChatGPT، ثم احفظ الصورة التي يعطيك إياها وارفعها هنا. نضيف في أسفلها شعار التطبيق ورمز QR مضمون القراءة، لتشاركها مع أصدقائك.", stampPick: "اختر الصورة من ChatGPT", stampDl: "تحميل الصورة", stampScan: "امسح الرمز لتجرّب YES TEST", stampErr: "تعذّر قراءة الصورة. جرّب صورة أخرى.", stampHint: "تحقق من الإملاء والأسماء في الصورة قبل أن تعتمدها أو تشاركها.", aboutLink: "تعرّف على التطبيق والاشتراكات", aboutTitle: "عن YES TEST", aboutFail: "تعذّر تحميل المعلومات. تحقق من الإنترنت.", featuresTitle: "المزايا", offersTitle: "الاشتراكات", seeOffers: "عرض الاشتراكات", profAbout: "الاشتراكات والمزايا", srcKeep: "الملف أو النص الحالي يبقى عند تغيير الوضع.", newSource: "درس جديد (مسح الملف والنص)", sameSource: "جرّب الدرس نفسه بوضع آخر", gptTitle: "حوّل هذا الملخص في ChatGPT", gptHint: "انسخ البرومت والصقه في محادثتك مع ChatGPT، وهو يتضمن الملخص جاهزاً.", gptMap: "نسخ برومت الخريطة الذهنية", gptNotes: "نسخ برومت القصاصات", gptOpen: "فتح ChatGPT", copiedShort: "تم النسخ ✓", modeLabel: "ماذا تريد؟",
     modes: { qcs: "QCS (اختيار واحد)", qcm: "QCM (اختيار متعدد)", summary: "تلخيص", memorize: "حفظ", review: "مراجعة", mindmap: "خريطة ذهنية", visual: "مخطط بصري", stickynotes: "ملاحظات لاصقة", handwritten: "بخط اليد" },
     fileLabel: "ملف الدرس", drop: "اختر ملف PDF أو صورة", textLabel: "أو ألصق نص الدرس هنا", removeFile: "إزالة الملف",
     styleLabel: "نموذج امتحان سابق (اختياري)", styleHint: "يستعمله النموذج لمحاكاة أسلوب أسئلة الأستاذ فقط، دون نسخ أسئلته.", styleDrop: "اختر نموذج امتحان (PDF أو صورة)",
@@ -396,7 +407,7 @@ const T = {
     savedNote: "Les cours, quiz et résultats sont enregistrés sur cet appareil uniquement. Refaire un quiz enregistré ne consomme pas votre crédit.",
     plan: "Formule", usedToday: "Crédit du jour", usedTrial: "Crédit d’essai", lang: "Langue", logout: "Se déconnecter", clearData: "Effacer les données de l’appareil", clearConfirm: "Les cours, quiz et résultats de cet appareil seront effacés. Continuer ?",
     installTip: "Pour installer YES TEST comme une appli : menu du navigateur, puis « Ajouter à l’écran d’accueil ».",
-    back: "Retour", createTitle: "Nouveau", aboutLink: "Découvrir l’application et les abonnements", aboutTitle: "À propos de YES TEST", aboutFail: "Impossible de charger les informations. Vérifiez votre connexion.", featuresTitle: "Avantages", offersTitle: "Abonnements", seeOffers: "Voir les abonnements", profAbout: "Abonnements et avantages", srcKeep: "Le fichier ou le texte actuel est conservé quand vous changez de mode.", newSource: "Nouveau cours (effacer fichier et texte)", sameSource: "Essayez le même cours dans un autre mode", gptTitle: "Transformez ce résumé dans ChatGPT", gptHint: "Copiez le prompt et collez-le dans votre conversation ChatGPT ; il contient déjà le résumé.", gptMap: "Copier le prompt carte mentale", gptNotes: "Copier le prompt fiches post-it", gptOpen: "Ouvrir ChatGPT", copiedShort: "Copié ✓", modeLabel: "Que voulez-vous ?",
+    back: "Retour", createTitle: "Nouveau", haveCode: "J’ai un code d’abonnement", orderOffer: "Commander cette offre sur WhatsApp", waMsg: "Bonjour, je souhaite m’abonner à YES TEST : offre « {offer} » ({price}).", gptInfo: "Copier le prompt infographie", stampBtn: "Ajouter la marque YES TEST à l’image", stampTitle: "Marquer l’image YES TEST", stampHelp: "Collez le prompt infographie dans ChatGPT, enregistrez l’image obtenue puis importez-la ici. Nous ajoutons en bas le logo de l’application et un QR code garanti lisible, pour la partager avec vos amis.", stampPick: "Choisir l’image de ChatGPT", stampDl: "Télécharger l’image", stampScan: "Scannez pour essayer YES TEST", stampErr: "Image illisible. Essayez-en une autre.", stampHint: "Vérifiez l’orthographe et les noms dans l’image avant de la valider ou de la partager.", aboutLink: "Découvrir l’application et les abonnements", aboutTitle: "À propos de YES TEST", aboutFail: "Impossible de charger les informations. Vérifiez votre connexion.", featuresTitle: "Avantages", offersTitle: "Abonnements", seeOffers: "Voir les abonnements", profAbout: "Abonnements et avantages", srcKeep: "Le fichier ou le texte actuel est conservé quand vous changez de mode.", newSource: "Nouveau cours (effacer fichier et texte)", sameSource: "Essayez le même cours dans un autre mode", gptTitle: "Transformez ce résumé dans ChatGPT", gptHint: "Copiez le prompt et collez-le dans votre conversation ChatGPT ; il contient déjà le résumé.", gptMap: "Copier le prompt carte mentale", gptNotes: "Copier le prompt fiches post-it", gptOpen: "Ouvrir ChatGPT", copiedShort: "Copié ✓", modeLabel: "Que voulez-vous ?",
     modes: { qcs: "QCS (choix unique)", qcm: "QCM (choix multiple)", summary: "Résumé", memorize: "Mémoriser", review: "Réviser", mindmap: "Carte mentale", visual: "Fiche visuelle", stickynotes: "Post-it", handwritten: "Notes manuscrites" },
     fileLabel: "Fichier du cours", drop: "Choisir un PDF ou une image", textLabel: "Ou collez le texte du cours ici", removeFile: "Retirer le fichier",
     styleLabel: "Ancien sujet d’examen (facultatif)", styleHint: "Sert uniquement à imiter le style des questions du professeur, sans copier ses questions.", styleDrop: "Choisir un sujet (PDF ou image)",
@@ -422,6 +433,7 @@ const T = {
 /* ===================== state ===================== */
 const FALLBACK_PROMPTS = {
   mindmap: { ar: "حوّل الملخص التالي إلى خريطة ذهنية احترافية سهلة الحفظ (فروع رئيسية وفرعية بعبارات قصيرة وألوان مختلفة)، واعتمد عليه فقط:\n\n{{SUMMARY}}", fr: "Transforme le résumé suivant en une carte mentale professionnelle facile à mémoriser (branches courtes, couleurs différentes), sans rien ajouter :\n\n{{SUMMARY}}" },
+  infographic: { ar: "أنشئ إنفوغرافيك تعليمياً من الملخص التالي (عنوان وأقسام مرقمة ملوّنة ونقاط قصيرة وأسهم)، واترك شريطاً أبيض فارغاً في أسفل الصورة، واعتمد على الملخص فقط:\n\n{{SUMMARY}}", fr: "Crée une infographie pédagogique à partir du résumé suivant (titre, sections numérotées colorées, points courts, flèches) et laisse une bande blanche vide en bas, sans rien ajouter :\n\n{{SUMMARY}}" },
   notes: { ar: "حوّل الملخص التالي إلى قصاصات (بطاقات لاصقة) ملوّنة: عنوان قصير و2 إلى 4 نقاط وحيلة حفظ لكل قصاصة، واعتمد عليه فقط:\n\n{{SUMMARY}}", fr: "Transforme le résumé suivant en fiches post-it colorées : titre court, 2 à 4 points et une astuce de mémorisation par fiche, sans rien ajouter :\n\n{{SUMMARY}}" }
 };
 let lang = "ar";
@@ -573,8 +585,17 @@ function paywallCard() {
   if (!isTrial()) return `<div class="card" style="margin-bottom:14px;text-align:center">${t.dayOver}</div>`;
   const u = contactUrl();
   const label = (content && loc(content.contact_text)) || t.payBtn;
-  const btn = u ? `<a class="btn orange big" style="display:block;text-decoration:none;margin-top:10px" href="${esc(u)}" target="_blank" rel="noopener">${esc(label)}</a>` : `<p class="muted" style="margin-top:8px">${t.payNoLink}</p>`;
+  const btn = u ? `<a class="btn orange big" data-wa="1" style="display:block;text-decoration:none;margin-top:10px" href="${esc(u)}" target="_blank" rel="noopener">${esc(label)}</a>` : `<p class="muted" style="margin-top:8px">${t.payNoLink}</p>`;
   return `<div class="paywall"><h2>${t.payTitle}</h2><p>${t.payText}</p>${btn}<button class="btn ghost big" style="margin-top:8px" data-act="about" data-arg="offers" type="button">${t.seeOffers}</button></div>`;
+}
+function getRef() { try { const r = new URLSearchParams(location.search).get("ref") || ""; return /^[A-Za-z0-9_-]{1,20}$/.test(r) ? r.toLowerCase() : ""; } catch (e) { return ""; } }
+const REF = getRef();
+function track(kind) { try { api({ action: "track", ref: REF || "direct", kind: kind }).catch(() => {}); } catch (e) {} }
+function waLink(o) {
+  const u = contactUrl(); if (!u) return "";
+  if (!/^https:\/\/(wa\.me|api\.whatsapp\.com|chat\.whatsapp\.com)/i.test(u)) return u;
+  const msg = fmt(tx().waMsg, { offer: loc(o.title), price: loc(o.price) }) + (REF ? "\n[" + REF + "]" : "");
+  return u + (u.indexOf("?") >= 0 ? "&" : "?") + "text=" + encodeURIComponent(msg);
 }
 function contactUrl() { const u = (content && content.contact_url) || CONTACT_URL || ""; return /^https?:\/\//i.test(u) ? u : ""; }
 const loc = (o) => (o && (o[lang] || o.ar || o.fr)) || "";
@@ -693,19 +714,54 @@ function renderAbout() {
   const t = tx(), c = content;
   if (!c) { $("aboutBody").innerHTML = `<p class="empty">${t.aboutFail}</p>`; return; }
   let h = `<div style="text-align:center"><img src="logo.png" alt="YES TEST" style="width:min(280px,80%);height:auto"></div>`;
+  if (!me) h += `<button class="btn ghost big" style="margin-top:12px" data-act="closeAbout" type="button">${t.haveCode}</button>`;
   const about = loc(c.about); if (about) h += `<p style="margin:12px 0;white-space:pre-line">${esc(about)}</p>`;
   const feats = lines(loc(c.features));
   if (feats.length) h += `<h2 class="sec">${t.featuresTitle}</h2><ul class="feat">${feats.map((x) => `<li><span>${esc(x)}</span></li>`).join("")}</ul>`;
   const offers = (c.offers || []).filter((o) => loc(o.title));
   if (offers.length) {
     h += `<h2 class="sec" id="offersAnchor">${t.offersTitle}</h2><div class="offers">` + offers.map((o) =>
-      `<div class="offer ${o.highlight ? "hl" : ""}">${loc(o.badge) ? `<span class="obadge">${esc(loc(o.badge))}</span>` : ""}<h3>${esc(loc(o.title))}</h3><div class="oprice">${esc(loc(o.price))}</div><ul>${lines(loc(o.perks)).map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>`).join("") + `</div>`;
+      `<div class="offer ${o.highlight ? "hl" : ""}">${loc(o.badge) ? `<span class="obadge">${esc(loc(o.badge))}</span>` : ""}<h3>${esc(loc(o.title))}</h3><div class="oprice">${esc(loc(o.price))}</div><ul>${lines(loc(o.perks)).map((x) => `<li>${esc(x)}</li>`).join("")}</ul>${contactUrl() ? `<a class="btn ${o.highlight ? "orange" : ""} big" data-wa="1" style="display:block;text-decoration:none;text-align:center;margin-top:12px" href="${esc(waLink(o))}" target="_blank" rel="noopener">${t.orderOffer}</a>` : ""}</div>`).join("") + `</div>`;
   }
   const u = contactUrl(), label = loc(c.contact_text) || t.payBtn;
-  h += u ? `<a class="btn orange big" style="display:block;text-decoration:none;margin-top:18px;text-align:center" href="${esc(u)}" target="_blank" rel="noopener">${esc(label)}</a>`
+  h += u ? `<a class="btn orange big" data-wa="1" style="display:block;text-decoration:none;margin-top:18px;text-align:center" href="${esc(u)}" target="_blank" rel="noopener">${esc(label)}</a>`
          : (loc(c.contact_text) ? `<p class="muted" style="margin-top:14px;text-align:center">${esc(loc(c.contact_text))}</p>` : "");
   $("aboutBody").innerHTML = h;
 }
+
+/* ---- brand stamp: adds logo + a scannable QR under any image ---- */
+function loadImg(src) { return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; }); }
+async function stampImage(file) {
+  const t = tx(), url = URL.createObjectURL(file);
+  let img; try { img = await loadImg(url); } finally { URL.revokeObjectURL(url); }
+  const [logo, qr] = await Promise.all([loadImg("logo.png"), loadImg("qr.png")]);
+  let W = img.naturalWidth, H = img.naturalHeight;
+  if (W > 2000) { H = Math.round(H * 2000 / W); W = 2000; }
+  const fh = Math.max(200, Math.round(W * 0.22)), pad = Math.round(fh * 0.1), qs = fh - 2 * pad;
+  const c = document.createElement("canvas"); c.width = W; c.height = H + fh;
+  const g = c.getContext("2d");
+  g.fillStyle = "#fff"; g.fillRect(0, 0, W, H + fh);
+  g.drawImage(img, 0, 0, W, H);
+  g.fillStyle = "#01707f"; g.fillRect(0, H, W, Math.max(4, Math.round(fh * 0.025)));
+  g.imageSmoothingEnabled = false; g.drawImage(qr, W - pad - qs, H + pad, qs, qs); g.imageSmoothingEnabled = true;
+  const lw = Math.min(Math.round(W * 0.34), Math.round(logo.naturalWidth * (qs * 0.8) / logo.naturalHeight)), lh = Math.round(logo.naturalHeight * lw / logo.naturalWidth);
+  g.drawImage(logo, pad, H + (fh - lh) / 2, lw, lh);
+  const left = pad + lw + pad, right = W - pad - qs - pad, avail = Math.max(60, right - left);
+  let fs = Math.round(fh * 0.17); const fam = '"IBM Plex Sans Arabic","Segoe UI",Tahoma,Arial,sans-serif';
+  g.textAlign = "center"; g.fillStyle = "#0e2a35"; g.direction = t.dir;
+  do { g.font = `700 ${fs}px ${fam}`; fs -= 2; } while (g.measureText(t.stampScan).width > avail && fs > 10);
+  g.fillText(t.stampScan, left + avail / 2, H + fh / 2 + fs * 0.35);
+  return new Promise((res) => c.toBlob((b) => res({ blob: b, w: c.width, h: c.height }), "image/png"));
+}
+function openStamp() { $("stampOut").innerHTML = ""; $("stampFile").value = ""; openSheet("stampSheet"); }
+$("stampFile").addEventListener("change", async (e) => {
+  const f = e.target.files[0]; if (!f) return; const t = tx(), out = $("stampOut");
+  out.innerHTML = `<p class="muted">…</p>`;
+  try {
+    const r = await stampImage(f), u = URL.createObjectURL(r.blob), name = (f.name || "image").replace(/\.[^.]+$/, "") + "-yestest.png";
+    out.innerHTML = `<img src="${u}" alt="" style="width:100%;height:auto;border:1px solid var(--line);border-radius:12px"><a class="btn orange big" style="display:block;text-decoration:none;text-align:center;margin-top:12px" href="${u}" download="${esc(name)}">${t.stampDl}</a><p class="muted" style="margin-top:10px">${t.stampHint}</p>`;
+  } catch (err) { out.innerHTML = `<div class="msg err">${t.stampErr}</div>`; }
+});
 
 /* ---- keep the lesson file/text while switching modes ---- */
 const hasSource = () => !!fileLesson || ($("fText").value.trim().length > 0);
@@ -722,7 +778,7 @@ function buildPrompt(kind, text) {
 }
 function gptBlock() {
   const t = tx();
-  return `<div class="gpt no-print"><h3>${t.gptTitle}</h3><p class="muted">${t.gptHint}</p><div class="qactions"><button class="btn" data-act="copyPrompt" data-arg="mindmap" type="button">${t.gptMap}</button><button class="btn" data-act="copyPrompt" data-arg="notes" type="button">${t.gptNotes}</button><a class="btn ghost" href="https://chatgpt.com/" target="_blank" rel="noopener" style="text-decoration:none">${t.gptOpen}</a></div></div>`;
+  return `<div class="gpt no-print"><h3>${t.gptTitle}</h3><p class="muted">${t.gptHint}</p><div class="qactions"><button class="btn" data-act="copyPrompt" data-arg="mindmap" type="button">${t.gptMap}</button><button class="btn" data-act="copyPrompt" data-arg="notes" type="button">${t.gptNotes}</button><button class="btn" data-act="copyPrompt" data-arg="infographic" type="button">${t.gptInfo}</button><button class="btn orange" data-act="openStamp" type="button">${t.stampBtn}</button><a class="btn ghost" href="https://chatgpt.com/" target="_blank" rel="noopener" style="text-decoration:none">${t.gptOpen}</a></div></div>`;
 }
 
 function openCreate(mode) {
@@ -1080,6 +1136,7 @@ function closeView() {
 
 /* ===================== events ===================== */
 document.addEventListener("click", (e) => {
+  if (e.target.closest("a[data-wa]")) track("wa");
   const el = e.target.closest("[data-act]"); if (!el) return;
   const a = el.dataset.act, arg = el.dataset.arg, t = tx();
   switch (a) {
@@ -1105,6 +1162,8 @@ document.addEventListener("click", (e) => {
     case "copyLesson": navigator.clipboard.writeText(plainText(lessonOpen)).then(() => { $("copyL").textContent = t.copied; setTimeout(() => { const b = $("copyL"); if (b) b.textContent = t.copy; }, 1500); }).catch(() => {}); break;
     case "printPage": window.print(); break;
     case "about": openAbout(arg === "offers"); break;
+    case "openStamp": openStamp(); break;
+    case "closeStamp": closeSheet("stampSheet"); break;
     case "closeAbout": closeSheet("aboutSheet"); break;
     case "newSource": clearFile("lesson"); clearFile("style"); $("fText").value = ""; updateSrcBar(); break;
     case "srcMode": stopTimer(); quiz = null; lessonOpen = null; closeSheet("viewSheet"); render(); openCreate(arg); break;
@@ -1121,7 +1180,11 @@ $("codeIn").addEventListener("keydown", (e) => { if (e.key === "Enter") $("enter
   try { localStorage.removeItem("yt_lib"); } catch (e) {}
   const sl = safeGet("yt_lang"); if (sl === "fr" || sl === "ar") lang = sl;
   applyLang();
-  loadContent().then(() => { if (!$("aboutSheet").hidden) renderAbout(); });
+  try { if (!sessionStorage.getItem("yt_tracked")) { sessionStorage.setItem("yt_tracked", "1"); track("visit"); } } catch (e) { track("visit"); }
+  loadContent().then(() => {
+    if (!$("aboutSheet").hidden) renderAbout();
+    else if (REF && !safeGet("yt_code") && $("app").hidden) openAbout(false);
+  });
   const saved = safeGet("yt_code");
   if (saved) { $("codeIn").value = saved; login(saved, true); }
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(function () {});
