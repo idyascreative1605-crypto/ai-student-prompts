@@ -43,6 +43,13 @@
   .modes { display: flex; gap: 12px; flex-wrap: wrap; } .modes label { display: flex; gap: 6px; align-items: center; font-weight: 400; margin: 0; }
   .modes input { width: auto; accent-color: var(--teal); }
   table.vt { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 6px; } table.vt th, table.vt td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: start; } table.vt td.n { font-variant-numeric: tabular-nums; }
+  table.ut { border-collapse: collapse; font-size: 13.5px; min-width: 1100px; width: 100%; } table.ut th { position: sticky; top: 0; background: #e5f0f1; cursor: pointer; white-space: nowrap; user-select: none; }
+  table.ut th, table.ut td { padding: 5px 7px; border: 1px solid var(--line); text-align: start; white-space: nowrap; } table.ut td.n { font-variant-numeric: tabular-nums; text-align: center; }
+  table.ut tr:nth-child(even) td { background: #fafcfc; } table.ut .cin { width: 100%; min-width: 110px; padding: 3px 6px; border: 1px solid transparent; border-radius: 6px; background: transparent; font-size: 13.5px; } table.ut .cin:hover, table.ut .cin:focus { border-color: var(--teal); background: #fff; }
+  .twrap { overflow: auto; border: 1px solid var(--line); border-radius: 12px; background: #fff; max-height: 70vh; margin-top: 10px; }
+  .sums { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; margin-top: 14px; } .sums .card { margin: 0; padding: 10px 12px; text-align: center; } .sums b { font-size: 24px; display: block; line-height: 1.2; }
+  .fchips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; } .fchip { padding: 3px 13px; border-radius: 99px; border: 1.5px solid var(--line); background: #fff; font-size: 14px; } .fchip.on { background: var(--teal); color: #fff; border-color: var(--teal); }
+  .formula { direction: ltr; background: #f3f7f8; border: 1px dashed var(--line); border-radius: 8px; padding: 8px 10px; font-family: ui-monospace, Consolas, monospace; font-size: 13px; overflow-x: auto; white-space: nowrap; }
   details summary { cursor: pointer; color: var(--teal); font-size: 14px; margin-top: 8px; }
 </style>
 </head>
@@ -59,13 +66,14 @@
   </section>
 
   <section id="panel" hidden>
-    <div class="tabs"><button class="tab on" data-tab="codes" type="button">الأكواد</button><button class="tab" data-tab="plans" type="button">الباقات</button><button class="tab" data-tab="content" type="button">المحتوى</button></div>
+    <div class="tabs"><button class="tab on" data-tab="codes" type="button">الأكواد</button><button class="tab" data-tab="users" type="button">الجدول</button><button class="tab" data-tab="plans" type="button">الباقات</button><button class="tab" data-tab="content" type="button">المحتوى</button></div>
 
     <div id="codesTab">
       <div class="card">
         <b>إنشاء كود جديد</b>
         <div class="grid" style="margin-top:8px">
           <div><label for="nName">اسم الطالب</label><input id="nName" placeholder="اختياري"></div>
+          <div><label for="nPhone">الهاتف</label><input id="nPhone" placeholder="اختياري" dir="ltr"></div>
           <div><label for="nPlan">الباقة</label><select id="nPlan"></select></div>
           <div><label for="nDays">المدة</label><select id="nDays">
             <option value="30">30 يوماً</option><option value="90">3 أشهر</option><option value="180">6 أشهر</option><option value="365">سنة</option><option value="7">7 أيام (تجربة)</option><option value="0">بدون انتهاء</option></select></div>
@@ -78,6 +86,7 @@
       <div id="codeList"></div>
     </div>
 
+    <div id="usersTab" hidden></div>
     <div id="plansTab" hidden></div>
     <div id="contentTab" hidden></div>
   </section>
@@ -87,8 +96,8 @@
 <script>
 const WORKER_URL = "https://student-ai.idyascreative1605.workers.dev";
 const SITE_URL = "https://idyascreative1605-crypto.github.io/ai-student-prompts/";
-const MODE_LABEL = { qcs: "QCS", qcm: "QCM", summary: "تلخيص", memorize: "حفظ", review: "مراجعة", mindmap: "خريطة ذهنية", visual: "مخطط بصري", stickynotes: "ملاحظات لاصقة", handwritten: "بخط اليد" };
-const ALL_MODES = ["qcs", "qcm", "summary", "memorize", "review", "mindmap", "visual", "stickynotes", "handwritten"];
+const MODE_LABEL = { qcs: "QCS", qcm: "QCM", summary: "تلخيص", memorize: "حفظ", review: "مراجعة", visual: "مخطط بصري", stickynotes: "ملاحظات لاصقة", handwritten: "بخط اليد" };
+const ALL_MODES = ["qcs", "qcm", "summary", "memorize", "review", "visual", "stickynotes", "handwritten"];
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 let token = "", data = { plans: [], codes: [], today: "" }, lastErr = null;
@@ -107,7 +116,7 @@ async function api(action, extra) {
 }
 async function refresh() {
   const d = await api("admin_overview"); if (!d) return false;
-  data = d; renderPlanSelect(); renderCodes(); renderPlans(); return true;
+  data = d; renderPlanSelect(); renderCodes(); renderUsers(); renderPlans(); return true;
 }
 async function doLogin() {
   token = $("tok").value.trim(); if (!token) return;
@@ -130,7 +139,7 @@ $("tok").addEventListener("keydown", (e) => { if (e.key === "Enter") doLogin(); 
 $("logout").onclick = () => { try { sessionStorage.removeItem("yt_admin"); } catch (e) {} location.reload(); };
 document.querySelectorAll(".tab").forEach((b) => b.onclick = () => {
   document.querySelectorAll(".tab").forEach((x) => x.classList.toggle("on", x === b));
-  $("codesTab").hidden = b.dataset.tab !== "codes"; $("plansTab").hidden = b.dataset.tab !== "plans"; $("contentTab").hidden = b.dataset.tab !== "content";
+  $("codesTab").hidden = b.dataset.tab !== "codes"; $("usersTab").hidden = b.dataset.tab !== "users"; $("plansTab").hidden = b.dataset.tab !== "plans"; $("contentTab").hidden = b.dataset.tab !== "content";
   if (b.dataset.tab === "content" && !cdata) loadContentAdmin();
 });
 
@@ -151,7 +160,7 @@ function renderCodes() {
   $("codeList").innerHTML = list.length ? list.map((c) => `
     <div class="card" data-code="${esc(c.code)}">
       <div class="row"><span class="code">${esc(c.code)}</span>${status(c)}</div>
-      <div class="muted">${esc(c.student || "بدون اسم")} · ${c.expires_at ? "ينتهي " + esc(c.expires_at) : "بدون انتهاء"} · اليوم ${c.today} · الإجمالي ${c.total}</div>
+      <div class="muted">${esc(c.student || "بدون اسم")}${c.phone ? " · " + esc(c.phone) : ""} · ${c.expires_at ? "ينتهي " + esc(c.expires_at) : "بدون انتهاء"} · اليوم ${c.today} · الإجمالي ${c.total}</div>
       <div class="grid" style="margin-top:8px">
         <div><label>الباقة</label><select data-f="plan">${data.plans.map((p) => `<option value="${esc(p.name)}" ${p.name === c.plan ? "selected" : ""}>${esc(p.label)}</option>`).join("")}</select></div>
       </div>
@@ -180,10 +189,10 @@ async function copy(text) { try { await navigator.clipboard.writeText(text); toa
 
 $("createBtn").onclick = async () => {
   $("createBtn").disabled = true;
-  const d = await api("admin_create_code", { student: $("nName").value.trim(), plan: $("nPlan").value, days: parseInt($("nDays").value, 10) });
+  const d = await api("admin_create_code", { student: $("nName").value.trim(), plan: $("nPlan").value, days: parseInt($("nDays").value, 10), phone: $("nPhone").value.trim() });
   $("createBtn").disabled = false;
   if (!d) return;
-  $("nName").value = "";
+  $("nName").value = ""; $("nPhone").value = "";
   await refresh();
   const c = { code: d.code, student: d.student, plan: d.plan, expires_at: d.expires_at };
   $("made").hidden = false;
@@ -238,7 +247,7 @@ function buildXlsx(head, rows) {
   };
   const all = [head, ...rows];
   const sheetRows = all.map((row, i) => `<row r="${i + 1}">${row.map((v, c) => cell(v, i + 1, c, i === 0)).join("")}</row>`).join("");
-  const widths = [18, 22, 14, 10, 14, 8, 10, 20];
+  const widths = [18, 22, 15, 14, 10, 14, 14, 8, 10, 20, 28];
   const X = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
   const NS = 'xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"';
   return zipStore([
@@ -250,20 +259,78 @@ function buildXlsx(head, rows) {
     { name: "xl/worksheets/sheet1.xml", text: X + `<worksheet ${NS}><sheetViews><sheetView workbookViewId="0" rightToLeft="1"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols>${widths.map((w, i) => `<col min="${i + 1}" max="${i + 1}" width="${w}" customWidth="1"/>`).join("")}</cols><sheetData>${sheetRows}</sheetData></worksheet>` }
   ]);
 }
-$("exportBtn").onclick = () => {
-  const head = ["الكود", "الطالب", "الباقة", "الحالة", "ينتهي في", "اليوم", "الإجمالي", "تاريخ الإنشاء"];
-  const rows = data.codes.map((c) => [c.code, c.student || "", planLabel(c.plan),
-    !c.active ? "موقوف" : (c.expires_at && c.expires_at < data.today ? "منتهي" : "فعّال"),
-    c.expires_at || "", Number(c.today) || 0, Number(c.total) || 0, c.created_at]);
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(buildXlsx(head, rows));
-  a.download = "yestest-codes-" + data.today + ".xlsx";
+const statusKey = (c) => (!c.active ? "off" : (c.expires_at && c.expires_at < data.today ? "exp" : "on"));
+const STATUS_TXT = { on: "فعّال", exp: "منتهي", off: "موقوف" };
+function exportTable() {
+  const head = ["الكود", "الطالب", "الهاتف", "الباقة", "الحالة", "ينتهي في", "آخر استعمال", "اليوم", "الإجمالي", "تاريخ الإنشاء", "ملاحظة"];
+  const rows = data.codes.map((c) => [c.code, c.student || "", c.phone || "", planLabel(c.plan), STATUS_TXT[statusKey(c)],
+    c.expires_at || "", c.last_day || "", Number(c.today) || 0, Number(c.total) || 0, c.created_at, c.note || ""]);
+  return { head, rows };
+}
+function downloadXlsx() {
+  const t = exportTable(), a = document.createElement("a");
+  a.href = URL.createObjectURL(buildXlsx(t.head, t.rows));
+  a.download = "yestest-users-" + data.today + ".xlsx";
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 1500);
   toast("تم تنزيل الملف");
-};
+}
+$("exportBtn").onclick = downloadXlsx;
 
-/* ---------- site content (about, features, offers, contact, ChatGPT prompts) ---------- */
+/* ---------- users table (spreadsheet view) ---------- */
+let usort = { k: "created_at", d: -1 }, ufilter = "all", uq = "";
+function renderUsers() {
+  const box = $("usersTab"); if (!box) return;
+  const cs = data.codes, cnt = { all: cs.length, on: 0, exp: 0, off: 0 };
+  cs.forEach((c) => { cnt[statusKey(c)]++; });
+  const usedToday = cs.filter((c) => c.today > 0).length, totalReq = cs.reduce((a, c) => a + (Number(c.total) || 0), 0);
+  const val = (c, k) => k === "status" ? statusKey(c) : k === "plan" ? planLabel(c.plan) : c[k];
+  let list = cs.filter((c) => (ufilter === "all" || statusKey(c) === ufilter) &&
+    (!uq || [c.code, c.student, c.phone, c.note].some((x) => String(x || "").toLowerCase().includes(uq))));
+  list.sort((a, b) => { const x = val(a, usort.k), y = val(b, usort.k); if (x == null || x === "") return 1; if (y == null || y === "") return -1;
+    return (typeof x === "number" && typeof y === "number" ? x - y : String(x).localeCompare(String(y))) * usort.d; });
+  const th = (k, label) => `<th data-sort="${k}">${label}${usort.k === k ? (usort.d > 0 ? " ▲" : " ▼") : ""}</th>`;
+  const cin = (c, f) => `<input class="cin" data-edit="${f}" data-code="${esc(c.code)}" value="${esc(c[f] || "")}" ${f === "phone" ? 'dir="ltr"' : ""}>`;
+  const pill = (c) => { const k = statusKey(c); return `<span class="pill ${k === "on" ? "" : k}">${STATUS_TXT[k]}</span>`; };
+  const filters = [["all", "الكل"], ["on", "فعّال"], ["exp", "منتهي"], ["off", "موقوف"]];
+  box.innerHTML = `
+    <div class="sums"><div class="card"><b>${cnt.all}</b><span class="muted">الأكواد</span></div><div class="card"><b>${cnt.on}</b><span class="muted">فعّال</span></div>
+      <div class="card"><b>${cnt.exp}</b><span class="muted">منتهي</span></div><div class="card"><b>${usedToday}</b><span class="muted">استعملوا اليوم</span></div><div class="card"><b>${totalReq}</b><span class="muted">إجمالي الطلبات</span></div></div>
+    <div class="card"><div class="grid"><div><label for="uq">بحث (اسم، هاتف، كود، ملاحظة)</label><input id="uq" value="${esc(uq)}"></div></div>
+      <div class="fchips">${filters.map((f) => `<button class="fchip ${ufilter === f[0] ? "on" : ""}" data-filter="${f[0]}" type="button">${f[1]} (${cnt[f[0]]})</button>`).join("")}</div>
+      <div class="actions"><button class="btn sm orange" data-udo="copy" type="button">نسخ الجدول للصقه في Google Sheets</button><button class="btn sm" data-udo="xlsx" type="button">تصدير Excel (.xlsx)</button></div>
+      <details><summary>ربط حيّ مع Google Sheets (يتحدّث تلقائياً)</summary>
+        <ol style="margin:.5em 0;padding-inline-start:1.3em"><li>في Cloudflare: Worker ثم Paramètres ثم Variables et secrets، أضف سراً (Secret) اسمه <b dir="ltr">SHEET_KEY</b> بقيمة طويلة عشوائية (حروف وأرقام).</li>
+          <li>في Google Sheets اكتب في الخلية A1 هذه الصيغة (بدّل الكلمة الأخيرة بمفتاحك):</li></ol>
+        <div class="formula" id="formula">=IMPORTDATA("${WORKER_URL}/export?key=ضع_المفتاح_هنا")</div>
+        <div class="actions"><button class="btn sm ghost" data-udo="formula" type="button">نسخ الصيغة</button></div>
+        <p class="muted">للحصول على Excel: من Google Sheets اختر File ثم Download ثم Microsoft Excel (.xlsx). ولا تشارك الشيت علناً، فالمفتاح ظاهر لكل من يستطيع تعديله.</p></details></div>
+    <div class="twrap"><table class="ut"><tr><th>#</th>${th("code", "الكود")}${th("student", "الطالب")}${th("phone", "الهاتف")}${th("plan", "الباقة")}${th("status", "الحالة")}${th("expires_at", "ينتهي في")}${th("last_day", "آخر استعمال")}${th("today", "اليوم")}${th("total", "الإجمالي")}${th("created_at", "الإنشاء")}${th("note", "ملاحظة")}</tr>
+      ${list.map((c, i) => `<tr><td class="n">${i + 1}</td><td dir="ltr"><b>${esc(c.code)}</b></td><td>${cin(c, "student")}</td><td>${cin(c, "phone")}</td><td>${esc(planLabel(c.plan))}</td><td>${pill(c)}</td><td dir="ltr">${esc(c.expires_at || "—")}</td><td dir="ltr">${esc(c.last_day || "—")}</td><td class="n">${c.today}</td><td class="n">${c.total}</td><td dir="ltr">${esc((c.created_at || "").slice(0, 10))}</td><td>${cin(c, "note")}</td></tr>`).join("") || '<tr><td colspan="12" class="muted">لا نتائج.</td></tr>'}
+    </table></div><p class="muted">اضغط عنوان أي عمود للترتيب. وعدّل الاسم والهاتف والملاحظة مباشرة داخل الجدول، فتُحفظ فور الخروج من الخانة.</p>`;
+}
+$("usersTab").addEventListener("click", async (e) => {
+  const th = e.target.closest("th[data-sort]"), fc = e.target.closest("[data-filter]"), b = e.target.closest("[data-udo]");
+  if (th) { const k = th.dataset.sort; usort = { k, d: usort.k === k ? -usort.d : 1 }; renderUsers(); }
+  else if (fc) { ufilter = fc.dataset.filter; renderUsers(); }
+  else if (b) {
+    if (b.dataset.udo === "xlsx") downloadXlsx();
+    else if (b.dataset.udo === "formula") copy($("formula").textContent);
+    else if (b.dataset.udo === "copy") {
+      const t = exportTable(), clean = (v) => String(v == null ? "" : v).replace(/[\t\r\n]+/g, " ");
+      copy([t.head, ...t.rows].map((r) => r.map(clean).join("\t")).join("\n")).then(() => toast("نُسخ الجدول. افتح Google Sheets والصق بـ Ctrl+V"));
+    }
+  }
+});
+$("usersTab").addEventListener("input", (e) => { if (e.target.id === "uq") { uq = e.target.value.trim().toLowerCase(); const pos = e.target.selectionStart; renderUsers(); const n = $("uq"); n.focus(); n.setSelectionRange(pos, pos); } });
+$("usersTab").addEventListener("change", async (e) => {
+  const el = e.target.closest("[data-edit]"); if (!el) return;
+  const code = el.dataset.code, f = el.dataset.edit, v = el.value.trim();
+  const d = await api("admin_update_code", { code, fields: { [f]: v } });
+  if (d) { const c = data.codes.find((x) => x.code === code); if (c) c[f] = v; renderCodes(); toast("تم الحفظ"); }
+});
+
+/* ---------- site content (about, features, offers, contact, ChatGPT prompt) ---------- */
 let cdata = null;
 const ta = (label, p, v, rows) => `<div style="margin-top:8px"><label>${label}</label><textarea data-p="${p}" rows="${rows || 3}">${esc(v)}</textarea></div>`;
 const inp = (label, p, v) => `<div><label>${label}</label><input data-p="${p}" value="${esc(v)}"></div>`;
@@ -293,10 +360,8 @@ function renderContent() {
   h += `<div class="card"><b>المزايا</b><p class="muted">اكتب كل ميزة في سطر مستقل.</p>${ta("بالعربية", "features.ar", c.features.ar, 7)}${ta("Français", "features.fr", c.features.fr, 7)}</div>`;
   h += `<div class="card"><b>الاشتراكات (العروض)</b><p class="muted">تظهر للطالب في صفحة «الاشتراكات والمزايا». لا تنسَ كتابة الأسعار الفعلية.</p><div id="offersBox">${c.offers.map(offerEd).join("")}</div><button class="btn sm ghost" data-do="addOffer" type="button">+ إضافة عرض</button></div>`;
   h += `<div class="card"><b>التواصل للاشتراك</b><div class="grid" style="margin-top:8px">${inp("رابط واتساب (يبدأ بـ https://)", "contact_url", c.contact_url)}${inp("نص الزر (عربي)", "contact_text.ar", c.contact_text.ar)}${inp("Texte du bouton (FR)", "contact_text.fr", c.contact_text.fr)}</div><p class="muted">مثال الرابط: https://wa.me/213XXXXXXXXX</p></div>`;
-  h += `<div class="card"><b>برومتات ChatGPT (تظهر بعد التلخيص)</b><p class="muted">اكتب <b dir="ltr">{{SUMMARY}}</b> في المكان الذي سيُدرج فيه الملخص تلقائياً.</p>
-    ${ta("خريطة ذهنية — عربي", "prompts.mindmap.ar", c.prompts.mindmap.ar, 9)}${ta("Carte mentale — FR", "prompts.mindmap.fr", c.prompts.mindmap.fr, 9)}
-    ${ta("قصاصات — عربي", "prompts.notes.ar", c.prompts.notes.ar, 7)}${ta("Fiches post-it — FR", "prompts.notes.fr", c.prompts.notes.fr, 7)}
-    ${ta("إنفوغرافيك مصوّر — عربي", "prompts.infographic.ar", c.prompts.infographic.ar, 10)}${ta("Infographie — FR", "prompts.infographic.fr", c.prompts.infographic.fr, 10)}</div>`;
+  h += `<div class="card"><b>برومت المخطط البصري (يظهر تحت الملخص)</b><p class="muted">اكتب <b dir="ltr">{{SUMMARY}}</b> في المكان الذي سيُدرج فيه الملخص تلقائياً. وفي النص الافتراضي شريط التعريف السفلي (اسم التطبيق والرابط ورقم واتساب)، فعدّله هنا إن تغيّر أي منها.</p>
+    ${ta("بالعربية", "prompts.infographic.ar", c.prompts.infographic.ar, 14)}${ta("Français", "prompts.infographic.fr", c.prompts.infographic.fr, 14)}</div>`;
   h += `<div class="savebar"><button class="btn orange" data-do="saveContent" type="button">حفظ التغييرات</button><button class="btn ghost" data-do="resetContent" type="button">استعادة النصوص الافتراضية</button></div>`;
   $("contentTab").innerHTML = h;
   loadVisits();
@@ -310,7 +375,7 @@ function collectContent() {
   });
   return { about: { ar: g("about.ar"), fr: g("about.fr") }, features: { ar: g("features.ar"), fr: g("features.fr") }, offers,
     contact_url: g("contact_url"), contact_text: { ar: g("contact_text.ar"), fr: g("contact_text.fr") },
-    prompts: { mindmap: { ar: g("prompts.mindmap.ar"), fr: g("prompts.mindmap.fr") }, notes: { ar: g("prompts.notes.ar"), fr: g("prompts.notes.fr") }, infographic: { ar: g("prompts.infographic.ar"), fr: g("prompts.infographic.fr") } } };
+    prompts: { infographic: { ar: g("prompts.infographic.ar"), fr: g("prompts.infographic.fr") } } };
 }
 $("contentTab").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-do]"); if (!b) return;

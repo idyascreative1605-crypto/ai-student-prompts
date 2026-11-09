@@ -334,17 +334,6 @@
   </div>
 </section>
 
-<section id="stampSheet" class="sheet" hidden>
-  <div class="sheet-inner">
-    <div class="sheet-head"><button class="back" data-act="closeStamp" type="button" data-i="back"></button><h2 data-i="stampTitle"></h2></div>
-    <div class="sheet-body">
-      <p data-i="stampHelp"></p>
-      <label class="drop" style="margin-top:12px"><input type="file" id="stampFile" accept="image/*"><span data-i="stampPick"></span></label>
-      <div id="stampOut" style="margin-top:14px"></div>
-    </div>
-  </div>
-</section>
-
 <section id="aboutSheet" class="sheet" hidden>
   <div class="sheet-inner">
     <div class="sheet-head"><button class="back" data-act="closeAbout" type="button" data-i="back"></button><h2 data-i="aboutTitle"></h2></div>
@@ -358,20 +347,18 @@ const WORKER_URL = "https://student-ai.idyascreative1605.workers.dev";
 let content = null;
 const CONTACT_URL = "";   // اختياري: رابط واتساب لطلب كود، مثل https://wa.me/213XXXXXXXXX
 const LET = "ABCDE";
-const MODES = ["qcs", "qcm", "summary", "memorize", "review", "mindmap", "visual", "stickynotes", "handwritten"];
-const VISUAL_MODES = ["mindmap", "visual", "stickynotes"];
+const MODES = ["qcs", "qcm", "summary", "memorize", "review", "visual", "stickynotes", "handwritten"];
 
 /* ===================== texts ===================== */
 const T = {
   ar: {
     dir: "rtl", toggle: "Français",
     tagline: "اختبر نفسك .. وحقق أفضل نتيجة",
-    codeLabel: "لديك كود اشتراك؟ أدخله هنا", chip1: "ملخصات ذكية", chip2: "اختبارات QCM / QCS", chip3: "خرائط ذهنية", chip4: "تصحيح فوري", ctaDiscover: "اكتشف المزايا والعروض ✨", ctaTrial: "اطلب كود تجربة مجانية", waTrial: "مرحباً، أريد كود تجربة مجانية لتطبيق YES TEST.", enter: "ابدأ الآن", verifying: "جارٍ التحقق…", getCode: "ليس لديك كود؟ احصل عليه",
+    codeLabel: "لديك كود اشتراك؟ أدخله هنا", chip1: "ملخصات ذكية", chip2: "اختبارات QCM / QCS", chip3: "مخططات بصرية", chip4: "تصحيح فوري", ctaDiscover: "اكتشف المزايا والعروض ✨", ctaTrial: "اطلب كود تجربة مجانية", waTrial: "مرحباً، أريد كود تجربة مجانية لتطبيق YES TEST.", enter: "ابدأ الآن", verifying: "جارٍ التحقق…", getCode: "ليس لديك كود؟ احصل عليه",
     tHome: "الرئيسية", tQuizzes: "اختبارات", tLessons: "دروسي", tProfile: "ملفي",
     hello: "مرحباً {n}", hello0: "مرحباً بك", homeSub: "ابدأ رحلتك نحو التميز الآن",
     planLbl: "باقتك", todayLeft: "المتبقي اليوم", trialLeft: "رصيد التجربة المتبقي", payTitle: "انتهت تجربتك المجانية", payText: "أعجبك التطبيق؟ اشترك في النسخة المتقدمة لتواصل: كل الأوضاع، وأسئلة أكثر، ورصيد يومي متجدد.", payBtn: "اشترك الآن", payNoLink: "للاشتراك تواصل مع المسؤول.", dayOver: "انتهى رصيد اليوم، يتجدد غداً.", expires: "ينتهي في", noExpiry: "بدون تاريخ انتهاء", maxQ: "أقصى عدد أسئلة",
-    quick: "ماذا تريد أن تفعل؟", visualTitle: "تعلّم بصرياً", aMap: "خريطة ذهنية", aMapS: "فروع سهلة الحفظ", aVis: "مخطط بصري", aVisS: "بطاقات وأيقونات وخطوات", aSticky: "ملاحظات لاصقة", aStickyS: "بطاقات مختصرة", aHand: "بخط اليد", aHandS: "دفتر مراجعة مرتب",
-    mapDl: "تحميل صورة PNG", mapHint: "مرّر الخريطة يميناً ويساراً لرؤيتها كاملة.", stepsTitle: "التسلسل", tipLbl: "حيلة", remLbl: "للتذكّر",
+    quick: "ماذا تريد أن تفعل؟", visualTitle: "تعلّم بصرياً", aVis: "مخطط بصري", aVisS: "بطاقات وأيقونات وخطوات", aSticky: "ملاحظات لاصقة", aStickyS: "بطاقات مختصرة", aHand: "بخط اليد", aHandS: "دفتر مراجعة مرتب", stepsTitle: "التسلسل", tipLbl: "حيلة", remLbl: "للتذكّر",
     aQuiz: "ابدأ اختباراً", aQuizS: "QCM أو QCS من درسك", aSum: "لخّص درساً", aSumS: "ملخص منظم وواضح",
     aMem: "احفظ الدرس", aMemS: "بطاقات وحيل للحفظ", aRev: "راجع", aRevS: "ورقة مراجعة وأخطاء شائعة",
     prog: "متابعة النتائج", pQuizzes: "اختبارات", pAvg: "المعدل", pLast: "آخر النتائج", pWeak: "محاور تحتاج مراجعة", noRes: "لا نتائج بعد. ابدأ أول اختبار!",
@@ -380,8 +367,8 @@ const T = {
     savedNote: "تُحفظ الدروس والاختبارات والنتائج على هذا الجهاز فقط. إعادة الاختبار المحفوظ لا تستهلك رصيدك.",
     plan: "الباقة", usedToday: "رصيد اليوم", usedTrial: "رصيد التجربة", lang: "اللغة", logout: "تسجيل الخروج", clearData: "مسح بيانات الجهاز", clearConfirm: "سيتم مسح الدروس والاختبارات والنتائج من هذا الجهاز. متابعة؟",
     installTip: "لتثبيت YES TEST كتطبيق: من قائمة المتصفح اختر «إضافة إلى الشاشة الرئيسية».",
-    back: "رجوع", createTitle: "إنشاء جديد", haveCode: "لدي كود اشتراك", orderOffer: "اطلب هذا العرض عبر واتساب", waMsg: "مرحباً، أريد الاشتراك في YES TEST: العرض «{offer}» ({price}).", gptInfo: "نسخ برومت الإنفوغرافيك", stampBtn: "أضف علامة YES TEST للصورة", stampTitle: "ختم الصورة بعلامة YES TEST", stampHelp: "الصق برومت الإنفوغرافيك في ChatGPT، ثم احفظ الصورة التي يعطيك إياها وارفعها هنا. نضيف في أسفلها شعار التطبيق ورمز QR مضمون القراءة، لتشاركها مع أصدقائك.", stampPick: "اختر الصورة من ChatGPT", stampDl: "تحميل الصورة", stampScan: "امسح الرمز لتجرّب YES TEST", stampErr: "تعذّر قراءة الصورة. جرّب صورة أخرى.", stampHint: "تحقق من الإملاء والأسماء في الصورة قبل أن تعتمدها أو تشاركها.", aboutLink: "تعرّف على التطبيق والاشتراكات", aboutTitle: "عن YES TEST", aboutFail: "تعذّر تحميل المعلومات. تحقق من الإنترنت.", featuresTitle: "المزايا", offersTitle: "الاشتراكات", seeOffers: "عرض الاشتراكات", profAbout: "الاشتراكات والمزايا", srcKeep: "الملف أو النص الحالي يبقى عند تغيير الوضع.", newSource: "درس جديد (مسح الملف والنص)", sameSource: "جرّب الدرس نفسه بوضع آخر", gptTitle: "حوّل هذا الملخص في ChatGPT", gptHint: "انسخ البرومت والصقه في محادثتك مع ChatGPT، وهو يتضمن الملخص جاهزاً.", gptMap: "نسخ برومت الخريطة الذهنية", gptNotes: "نسخ برومت القصاصات", gptOpen: "فتح ChatGPT", copiedShort: "تم النسخ ✓", modeLabel: "ماذا تريد؟",
-    modes: { qcs: "QCS (اختيار واحد)", qcm: "QCM (اختيار متعدد)", summary: "تلخيص", memorize: "حفظ", review: "مراجعة", mindmap: "خريطة ذهنية", visual: "مخطط بصري", stickynotes: "ملاحظات لاصقة", handwritten: "بخط اليد" },
+    back: "رجوع", createTitle: "إنشاء جديد", haveCode: "لدي كود اشتراك", orderOffer: "اطلب هذا العرض عبر واتساب", waMsg: "مرحباً، أريد الاشتراك في YES TEST: العرض «{offer}» ({price}).", gptInfo: "📋 انسخ من هنا لتحويل ملخصك إلى مخطط بصري", aboutLink: "تعرّف على التطبيق والاشتراكات", aboutTitle: "عن YES TEST", aboutFail: "تعذّر تحميل المعلومات. تحقق من الإنترنت.", featuresTitle: "المزايا", offersTitle: "الاشتراكات", seeOffers: "عرض الاشتراكات", profAbout: "الاشتراكات والمزايا", srcKeep: "الملف أو النص الحالي يبقى عند تغيير الوضع.", newSource: "درس جديد (مسح الملف والنص)", sameSource: "جرّب الدرس نفسه بوضع آخر", gptTitle: "حوّل ملخصك إلى مخطط بصري", gptHint: "① انسخ البرومت  ② افتح ChatGPT  ③ الصقه وانتظر الصورة.", gptCheck: "راجع الإملاء والأسماء في الصورة مع درسك قبل أن تحفظ منها أو تشاركها.", gptOpen: "فتح ChatGPT", copiedShort: "تم النسخ ✓", modeLabel: "ماذا تريد؟",
+    modes: { qcs: "QCS (اختيار واحد)", qcm: "QCM (اختيار متعدد)", summary: "تلخيص", memorize: "حفظ", review: "مراجعة", visual: "مخطط بصري", stickynotes: "ملاحظات لاصقة", handwritten: "بخط اليد" },
     fileLabel: "ملف الدرس", drop: "اختر ملف PDF أو صورة", textLabel: "أو ألصق نص الدرس هنا", removeFile: "إزالة الملف",
     styleLabel: "نموذج امتحان سابق (اختياري)", styleHint: "يستعمله النموذج لمحاكاة أسلوب أسئلة الأستاذ فقط، دون نسخ أسئلته.", styleDrop: "اختر نموذج امتحان (PDF أو صورة)",
     countLabel: "عدد الأسئلة", countHint: "الحد الأقصى في باقتك: {n}",
@@ -404,12 +391,11 @@ const T = {
   fr: {
     dir: "ltr", toggle: "العربية",
     tagline: "Testez-vous… et obtenez le meilleur résultat",
-    codeLabel: "Vous avez un code ? Saisissez-le ici", chip1: "Résumés intelligents", chip2: "QCM / QCS", chip3: "Cartes mentales", chip4: "Correction immédiate", ctaDiscover: "Avantages et offres ✨", ctaTrial: "Demander un code d’essai gratuit", waTrial: "Bonjour, je souhaite un code d’essai gratuit pour YES TEST.", enter: "Commencer", verifying: "Vérification…", getCode: "Pas de code ? Obtenez-en un",
+    codeLabel: "Vous avez un code ? Saisissez-le ici", chip1: "Résumés intelligents", chip2: "QCM / QCS", chip3: "Schémas visuels", chip4: "Correction immédiate", ctaDiscover: "Avantages et offres ✨", ctaTrial: "Demander un code d’essai gratuit", waTrial: "Bonjour, je souhaite un code d’essai gratuit pour YES TEST.", enter: "Commencer", verifying: "Vérification…", getCode: "Pas de code ? Obtenez-en un",
     tHome: "Accueil", tQuizzes: "Quiz", tLessons: "Cours", tProfile: "Profil",
     hello: "Bonjour {n}", hello0: "Bienvenue", homeSub: "Commencez votre chemin vers l’excellence",
     planLbl: "Votre formule", todayLeft: "Restant aujourd’hui", trialLeft: "Crédit d’essai restant", payTitle: "Votre essai gratuit est terminé", payText: "L’appli vous plaît ? Passez à la formule avancée : tous les modes, plus de questions et un crédit quotidien renouvelé.", payBtn: "S’abonner", payNoLink: "Pour vous abonner, contactez l’administrateur.", dayOver: "Crédit du jour épuisé, il revient demain.", expires: "Expire le", noExpiry: "Sans date d’expiration", maxQ: "Questions max",
-    quick: "Que voulez-vous faire ?", visualTitle: "Apprendre en images", aMap: "Carte mentale", aMapS: "Branches faciles à retenir", aVis: "Fiche visuelle", aVisS: "Cartes, icônes et étapes", aSticky: "Post-it", aStickyS: "Fiches courtes", aHand: "Manuscrit", aHandS: "Cahier de révision soigné",
-    mapDl: "Télécharger en PNG", mapHint: "Faites défiler la carte pour la voir en entier.", stepsTitle: "Étapes", tipLbl: "Astuce", remLbl: "À retenir",
+    quick: "Que voulez-vous faire ?", visualTitle: "Apprendre en images", aVis: "Fiche visuelle", aVisS: "Cartes, icônes et étapes", aSticky: "Post-it", aStickyS: "Fiches courtes", aHand: "Manuscrit", aHandS: "Cahier de révision soigné", stepsTitle: "Étapes", tipLbl: "Astuce", remLbl: "À retenir",
     aQuiz: "Lancer un quiz", aQuizS: "QCM ou QCS de votre cours", aSum: "Résumer un cours", aSumS: "Résumé structuré et clair",
     aMem: "Mémoriser", aMemS: "Fiches et astuces", aRev: "Réviser", aRevS: "Fiche de révision et pièges",
     prog: "Suivi des résultats", pQuizzes: "quiz", pAvg: "Moyenne", pLast: "Derniers résultats", pWeak: "Thèmes à revoir", noRes: "Aucun résultat. Lancez votre premier quiz !",
@@ -418,8 +404,8 @@ const T = {
     savedNote: "Les cours, quiz et résultats sont enregistrés sur cet appareil uniquement. Refaire un quiz enregistré ne consomme pas votre crédit.",
     plan: "Formule", usedToday: "Crédit du jour", usedTrial: "Crédit d’essai", lang: "Langue", logout: "Se déconnecter", clearData: "Effacer les données de l’appareil", clearConfirm: "Les cours, quiz et résultats de cet appareil seront effacés. Continuer ?",
     installTip: "Pour installer YES TEST comme une appli : menu du navigateur, puis « Ajouter à l’écran d’accueil ».",
-    back: "Retour", createTitle: "Nouveau", haveCode: "J’ai un code d’abonnement", orderOffer: "Commander cette offre sur WhatsApp", waMsg: "Bonjour, je souhaite m’abonner à YES TEST : offre « {offer} » ({price}).", gptInfo: "Copier le prompt infographie", stampBtn: "Ajouter la marque YES TEST à l’image", stampTitle: "Marquer l’image YES TEST", stampHelp: "Collez le prompt infographie dans ChatGPT, enregistrez l’image obtenue puis importez-la ici. Nous ajoutons en bas le logo de l’application et un QR code garanti lisible, pour la partager avec vos amis.", stampPick: "Choisir l’image de ChatGPT", stampDl: "Télécharger l’image", stampScan: "Scannez pour essayer YES TEST", stampErr: "Image illisible. Essayez-en une autre.", stampHint: "Vérifiez l’orthographe et les noms dans l’image avant de la valider ou de la partager.", aboutLink: "Découvrir l’application et les abonnements", aboutTitle: "À propos de YES TEST", aboutFail: "Impossible de charger les informations. Vérifiez votre connexion.", featuresTitle: "Avantages", offersTitle: "Abonnements", seeOffers: "Voir les abonnements", profAbout: "Abonnements et avantages", srcKeep: "Le fichier ou le texte actuel est conservé quand vous changez de mode.", newSource: "Nouveau cours (effacer fichier et texte)", sameSource: "Essayez le même cours dans un autre mode", gptTitle: "Transformez ce résumé dans ChatGPT", gptHint: "Copiez le prompt et collez-le dans votre conversation ChatGPT ; il contient déjà le résumé.", gptMap: "Copier le prompt carte mentale", gptNotes: "Copier le prompt fiches post-it", gptOpen: "Ouvrir ChatGPT", copiedShort: "Copié ✓", modeLabel: "Que voulez-vous ?",
-    modes: { qcs: "QCS (choix unique)", qcm: "QCM (choix multiple)", summary: "Résumé", memorize: "Mémoriser", review: "Réviser", mindmap: "Carte mentale", visual: "Fiche visuelle", stickynotes: "Post-it", handwritten: "Notes manuscrites" },
+    back: "Retour", createTitle: "Nouveau", haveCode: "J’ai un code d’abonnement", orderOffer: "Commander cette offre sur WhatsApp", waMsg: "Bonjour, je souhaite m’abonner à YES TEST : offre « {offer} » ({price}).", gptInfo: "📋 Copiez ici pour transformer votre résumé en schéma visuel", aboutLink: "Découvrir l’application et les abonnements", aboutTitle: "À propos de YES TEST", aboutFail: "Impossible de charger les informations. Vérifiez votre connexion.", featuresTitle: "Avantages", offersTitle: "Abonnements", seeOffers: "Voir les abonnements", profAbout: "Abonnements et avantages", srcKeep: "Le fichier ou le texte actuel est conservé quand vous changez de mode.", newSource: "Nouveau cours (effacer fichier et texte)", sameSource: "Essayez le même cours dans un autre mode", gptTitle: "Transformez votre résumé en schéma visuel", gptHint: "① Copiez le prompt  ② Ouvrez ChatGPT  ③ Collez-le et attendez l’image.", gptCheck: "Vérifiez l’orthographe et les noms dans l’image avec votre cours avant de vous y fier ou de la partager.", gptOpen: "Ouvrir ChatGPT", copiedShort: "Copié ✓", modeLabel: "Que voulez-vous ?",
+    modes: { qcs: "QCS (choix unique)", qcm: "QCM (choix multiple)", summary: "Résumé", memorize: "Mémoriser", review: "Réviser", visual: "Fiche visuelle", stickynotes: "Post-it", handwritten: "Notes manuscrites" },
     fileLabel: "Fichier du cours", drop: "Choisir un PDF ou une image", textLabel: "Ou collez le texte du cours ici", removeFile: "Retirer le fichier",
     styleLabel: "Ancien sujet d’examen (facultatif)", styleHint: "Sert uniquement à imiter le style des questions du professeur, sans copier ses questions.", styleDrop: "Choisir un sujet (PDF ou image)",
     countLabel: "Nombre de questions", countHint: "Maximum dans votre formule : {n}",
@@ -443,9 +429,7 @@ const T = {
 
 /* ===================== state ===================== */
 const FALLBACK_PROMPTS = {
-  mindmap: { ar: "حوّل الملخص التالي إلى خريطة ذهنية احترافية سهلة الحفظ (فروع رئيسية وفرعية بعبارات قصيرة وألوان مختلفة)، واعتمد عليه فقط:\n\n{{SUMMARY}}", fr: "Transforme le résumé suivant en une carte mentale professionnelle facile à mémoriser (branches courtes, couleurs différentes), sans rien ajouter :\n\n{{SUMMARY}}" },
-  infographic: { ar: "أنشئ إنفوغرافيك تعليمياً من الملخص التالي (عنوان وأقسام مرقمة ملوّنة ونقاط قصيرة وأسهم)، واترك شريطاً أبيض فارغاً في أسفل الصورة، واعتمد على الملخص فقط:\n\n{{SUMMARY}}", fr: "Crée une infographie pédagogique à partir du résumé suivant (titre, sections numérotées colorées, points courts, flèches) et laisse une bande blanche vide en bas, sans rien ajouter :\n\n{{SUMMARY}}" },
-  notes: { ar: "حوّل الملخص التالي إلى قصاصات (بطاقات لاصقة) ملوّنة: عنوان قصير و2 إلى 4 نقاط وحيلة حفظ لكل قصاصة، واعتمد عليه فقط:\n\n{{SUMMARY}}", fr: "Transforme le résumé suivant en fiches post-it colorées : titre court, 2 à 4 points et une astuce de mémorisation par fiche, sans rien ajouter :\n\n{{SUMMARY}}" }
+  infographic: { ar: "أنشئ إنفوغرافيك تعليمياً من الملخص التالي (عنوان وأقسام مرقمة ملوّنة ونقاط قصيرة وأسهم) واعتمد عليه فقط. وفي أسفل الصورة اكتب حرفياً: YES TEST ✓ اختبر نفسك وحقق أفضل نتيجة، idyascreative1605-crypto.github.io/ai-student-prompts، واتساب للاستفسار: 0663488164\n\n{{SUMMARY}}", fr: "Crée une infographie pédagogique à partir du résumé suivant (titre, sections numérotées colorées, points courts, flèches) sans rien ajouter. En bas, écris exactement : YES TEST ✓ Testez-vous… et obtenez le meilleur résultat, idyascreative1605-crypto.github.io/ai-student-prompts, WhatsApp : 0663488164\n\n{{SUMMARY}}" }
 };
 let lang = "ar";
 let me = null;               // session info from the server
@@ -471,7 +455,7 @@ const emptyLib = () => ({ quizzes: [], lessons: [], results: [] });
 function libKey() { return "yt_lib:" + String(safeGet("yt_code") || "").toUpperCase(); }
 function loadLib() {
   if (!safeGet("yt_code")) return emptyLib();
-  try { const o = JSON.parse(safeGet(libKey()) || "{}"); return { quizzes: o.quizzes || [], lessons: o.lessons || [], results: o.results || [] }; }
+  try { const o = JSON.parse(safeGet(libKey()) || "{}"); return { quizzes: o.quizzes || [], lessons: (o.lessons || []).filter((l) => l.mode !== "mindmap"), results: o.results || [] }; }
   catch (e) { return emptyLib(); }
 }
 let lib = emptyLib();
@@ -583,7 +567,6 @@ const ICON = {
   quiz: '<svg class="ic" viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg>',
   sum: '<svg class="ic" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>',
   mem: '<svg class="ic" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>',
-  map: '<svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><circle cx="4.5" cy="5" r="2"/><circle cx="19.5" cy="5" r="2"/><circle cx="4.5" cy="19" r="2"/><circle cx="19.5" cy="19" r="2"/><path d="M6 6.2l3.6 3.6M18 6.2l-3.6 3.6M6 17.8l3.6-3.6M18 17.8l-3.6-3.6"/></svg>',
   vis: '<svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 17.5h7M17.5 14v7"/></svg>',
   note: '<svg class="ic" viewBox="0 0 24 24"><path d="M4 4h16v10l-6 6H4z"/><path d="M14 20v-6h6"/></svg>',
   pen: '<svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
@@ -661,10 +644,9 @@ function viewHome() {
     <button class="ac t3" data-act="create" data-arg="memorize" type="button"><span class="ico">${ICON.mem}</span><b>${t.aMem}</b><small>${t.aMemS}</small></button>
     <button class="ac t4" data-act="create" data-arg="review" type="button"><span class="ico">${ICON.rev}</span><b>${t.aRev}</b><small>${t.aRevS}</small></button></div>`;
   h += `<h2 class="sec">${t.visualTitle}</h2><div class="grid2">
-    <button class="ac t5" data-act="create" data-arg="mindmap" type="button"><span class="ico">${ICON.map}</span><b>${t.aMap}</b><small>${t.aMapS}</small></button>
     <button class="ac t6" data-act="create" data-arg="visual" type="button"><span class="ico">${ICON.vis}</span><b>${t.aVis}</b><small>${t.aVisS}</small></button>
     <button class="ac t7" data-act="create" data-arg="stickynotes" type="button"><span class="ico">${ICON.note}</span><b>${t.aSticky}</b><small>${t.aStickyS}</small></button>
-    <button class="ac t8" data-act="create" data-arg="handwritten" type="button"><span class="ico">${ICON.pen}</span><b>${t.aHand}</b><small>${t.aHandS}</small></button></div>`;
+    <button class="ac t8" data-act="create" data-arg="handwritten" type="button" style="grid-column:1/-1;min-height:0"><span class="ico">${ICON.pen}</span><b>${t.aHand}</b><small>${t.aHandS}</small></button></div>`;
   h += `<h2 class="sec">${t.prog}</h2><div class="card">`;
   if (!st.count) h += `<p class="empty">${t.noRes}</p>`;
   else {
@@ -747,40 +729,6 @@ function renderAbout() {
   $("aboutBody").innerHTML = h;
 }
 
-/* ---- brand stamp: adds logo + a scannable QR under any image ---- */
-function loadImg(src) { return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; }); }
-async function stampImage(file) {
-  const t = tx(), url = URL.createObjectURL(file);
-  let img; try { img = await loadImg(url); } finally { URL.revokeObjectURL(url); }
-  const [logo, qr] = await Promise.all([loadImg("logo.png"), loadImg("qr.png")]);
-  let W = img.naturalWidth, H = img.naturalHeight;
-  if (W > 2000) { H = Math.round(H * 2000 / W); W = 2000; }
-  const fh = Math.max(200, Math.round(W * 0.22)), pad = Math.round(fh * 0.1), qs = fh - 2 * pad;
-  const c = document.createElement("canvas"); c.width = W; c.height = H + fh;
-  const g = c.getContext("2d");
-  g.fillStyle = "#fff"; g.fillRect(0, 0, W, H + fh);
-  g.drawImage(img, 0, 0, W, H);
-  g.fillStyle = "#01707f"; g.fillRect(0, H, W, Math.max(4, Math.round(fh * 0.025)));
-  g.imageSmoothingEnabled = false; g.drawImage(qr, W - pad - qs, H + pad, qs, qs); g.imageSmoothingEnabled = true;
-  const lw = Math.min(Math.round(W * 0.34), Math.round(logo.naturalWidth * (qs * 0.8) / logo.naturalHeight)), lh = Math.round(logo.naturalHeight * lw / logo.naturalWidth);
-  g.drawImage(logo, pad, H + (fh - lh) / 2, lw, lh);
-  const left = pad + lw + pad, right = W - pad - qs - pad, avail = Math.max(60, right - left);
-  let fs = Math.round(fh * 0.17); const fam = '"IBM Plex Sans Arabic","Segoe UI",Tahoma,Arial,sans-serif';
-  g.textAlign = "center"; g.fillStyle = "#0e2a35"; g.direction = t.dir;
-  do { g.font = `700 ${fs}px ${fam}`; fs -= 2; } while (g.measureText(t.stampScan).width > avail && fs > 10);
-  g.fillText(t.stampScan, left + avail / 2, H + fh / 2 + fs * 0.35);
-  return new Promise((res) => c.toBlob((b) => res({ blob: b, w: c.width, h: c.height }), "image/png"));
-}
-function openStamp() { $("stampOut").innerHTML = ""; $("stampFile").value = ""; openSheet("stampSheet"); }
-$("stampFile").addEventListener("change", async (e) => {
-  const f = e.target.files[0]; if (!f) return; const t = tx(), out = $("stampOut");
-  out.innerHTML = `<p class="muted">…</p>`;
-  try {
-    const r = await stampImage(f), u = URL.createObjectURL(r.blob), name = (f.name || "image").replace(/\.[^.]+$/, "") + "-yestest.png";
-    out.innerHTML = `<img src="${u}" alt="" style="width:100%;height:auto;border:1px solid var(--line);border-radius:12px"><a class="btn orange big" style="display:block;text-decoration:none;text-align:center;margin-top:12px" href="${u}" download="${esc(name)}">${t.stampDl}</a><p class="muted" style="margin-top:10px">${t.stampHint}</p>`;
-  } catch (err) { out.innerHTML = `<div class="msg err">${t.stampErr}</div>`; }
-});
-
 /* ---- keep the lesson file/text while switching modes ---- */
 const hasSource = () => !!fileLesson || ($("fText").value.trim().length > 0);
 function updateSrcBar() { $("srcBar").hidden = !(hasSource() || fileStyle); }
@@ -796,7 +744,7 @@ function buildPrompt(kind, text) {
 }
 function gptBlock() {
   const t = tx();
-  return `<div class="gpt no-print"><h3>${t.gptTitle}</h3><p class="muted">${t.gptHint}</p><div class="qactions"><button class="btn" data-act="copyPrompt" data-arg="mindmap" type="button">${t.gptMap}</button><button class="btn" data-act="copyPrompt" data-arg="notes" type="button">${t.gptNotes}</button><button class="btn" data-act="copyPrompt" data-arg="infographic" type="button">${t.gptInfo}</button><button class="btn orange" data-act="openStamp" type="button">${t.stampBtn}</button><a class="btn ghost" href="https://chatgpt.com/" target="_blank" rel="noopener" style="text-decoration:none">${t.gptOpen}</a></div></div>`;
+  return `<div class="gpt no-print"><h3>${t.gptTitle}</h3><p class="muted">${t.gptHint}</p><div class="qactions"><button class="btn big" data-act="copyPrompt" data-arg="infographic" type="button">${t.gptInfo}</button><a class="btn ghost big" href="https://chatgpt.com/" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none">${t.gptOpen}</a></div><p class="muted" style="margin-top:8px">${t.gptCheck}</p></div>`;
 }
 
 function openCreate(mode) {
@@ -922,76 +870,9 @@ function openLesson(id) {
   openSheet("viewSheet"); renderLesson();
 }
 const MM_COLORS = ["#01707f", "#d46f00", "#7b4fc4", "#c43b5b", "#2e8b57", "#2a6fdb", "#a0522d", "#5b6b7a"];
-const MM_TINT = ["#d3f0ef", "#fdeccc", "#ece4fb", "#fde3ea", "#e3f5e8", "#dcecfb", "#f3e3d6", "#e6ebef"];
 const NOTE_COLORS = ["#fff3a3", "#ffd6e0", "#cdeedd", "#cfe4ff", "#ffe0b8", "#e6d9ff"];
 const NOTE_ROT = [-1.6, 1.2, -0.8, 1.8, -1.2, 0.9];
 
-function wrapText(txt, maxChars, maxLines) {
-  const words = String(txt).split(/\s+/).filter(Boolean), lines = []; let cur = "";
-  words.forEach((w) => { if ((cur + " " + w).trim().length <= maxChars) cur = (cur + " " + w).trim(); else { if (cur) lines.push(cur); cur = w; } });
-  if (cur) lines.push(cur);
-  if (lines.length > maxLines) { lines.length = maxLines; lines[maxLines - 1] = lines[maxLines - 1].replace(/.?$/, "…"); }
-  return lines.length ? lines : [""];
-}
-function buildMindmap(data, rtl) {
-  const FS = [17, 15, 14, 13], WD = [200, 172, 166, 160], HG = 46, VG = 10, PAD = 20;
-  const lv = (d) => Math.min(d, 3);
-  const root = { label: data.title || "", children: data.branches };
-  let cursor = PAD, maxDepth = 0;
-  const prep = (n, d, ci) => {
-    n.depth = d; n.ci = ci; maxDepth = Math.max(maxDepth, d);
-    n.w = WD[lv(d)]; n.fs = FS[lv(d)];
-    n.lines = wrapText(n.label, Math.max(6, Math.floor((n.w - 18) / (n.fs * 0.56))), 3);
-    n.h = n.lines.length * (n.fs + 5) + 16;
-    (n.children || []).forEach((c) => prep(c, d + 1, ci));
-  };
-  prep(root, 0, -1);
-  root.children.forEach((b, i) => prep(b, 1, i));
-  const place = (n) => {
-    if (!n.children || !n.children.length) { n.y = cursor + n.h / 2; cursor += n.h + VG; }
-    else { n.children.forEach(place); n.y = (n.children[0].y + n.children[n.children.length - 1].y) / 2; }
-  };
-  place(root);
-  const xs = [PAD]; for (let d = 0; d <= maxDepth; d++) xs[d + 1] = xs[d] + WD[lv(d)] + HG;
-  const W = xs[maxDepth] + WD[lv(maxDepth)] + PAD, H = Math.max(cursor - VG + PAD, 120);
-  const setX = (n) => { n.x = rtl ? W - xs[n.depth] - n.w : xs[n.depth]; (n.children || []).forEach(setX); };
-  setX(root);
-  let edges = "", nodes = "";
-  const draw = (n) => {
-    (n.children || []).forEach((c) => {
-      const x1 = rtl ? n.x : n.x + n.w, x2 = rtl ? c.x + c.w : c.x, m = (x1 + x2) / 2, col = MM_COLORS[c.ci % MM_COLORS.length];
-      edges += `<path d="M${x1} ${n.y} C${m} ${n.y} ${m} ${c.y} ${x2} ${c.y}" fill="none" stroke="${col}" stroke-width="${c.depth === 1 ? 3.2 : 2}" stroke-linecap="round"/>`;
-      draw(c);
-    });
-    const col = n.ci < 0 ? "#01516e" : MM_COLORS[n.ci % MM_COLORS.length], tint = n.ci < 0 ? "#01516e" : MM_TINT[n.ci % MM_TINT.length];
-    const solid = n.depth <= 1, fill = solid ? col : tint, ink = solid ? "#fff" : "#12303a";
-    const lh = n.fs + 5, top = n.y - (n.lines.length * lh) / 2;
-    nodes += `<rect x="${n.x}" y="${n.y - n.h / 2}" width="${n.w}" height="${n.h}" rx="${solid ? 14 : 10}" fill="${fill}" stroke="${solid ? "none" : col}" stroke-width="1.6"/>` +
-      n.lines.map((ln, i) => `<text x="${n.x + n.w / 2}" y="${top + lh * i + lh * 0.72}" font-size="${n.fs}" font-weight="${solid ? 700 : 500}" fill="${ink}" text-anchor="middle">${esc(ln)}</text>`).join("");
-  };
-  draw(root);
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="'IBM Plex Sans Arabic','Segoe UI',Tahoma,Arial,sans-serif"><rect width="${W}" height="${H}" fill="#fff"/>${edges}${nodes}</svg>`;
-}
-function viewMindmap(d) {
-  const t = tx();
-  return `<div class="qactions no-print" style="margin:0 0 10px"><button class="btn" data-act="mapPng" type="button">${t.mapDl}</button><button class="btn ghost" data-act="printPage" type="button">${t.print}</button></div>
-    <p class="muted no-print">${t.mapHint}</p><div class="mmwrap" id="mmWrap">${buildMindmap(d, t.dir === "rtl")}</div>`;
-}
-function downloadMindmap() {
-  const svg = $("mmWrap") && $("mmWrap").querySelector("svg"); if (!svg || !lessonOpen) return;
-  const w = +svg.getAttribute("width"), h = +svg.getAttribute("height"), sc = Math.min(2, 8000 / Math.max(w, h));
-  const img = new Image();
-  img.onload = () => {
-    const c = document.createElement("canvas"); c.width = Math.round(w * sc); c.height = Math.round(h * sc);
-    const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
-    c.toBlob((b) => {
-      const a = document.createElement("a"); a.href = URL.createObjectURL(b);
-      a.download = (lessonOpen.title || "mindmap").replace(/[\\/:*?"<>|]+/g, " ").trim() + ".png";
-      document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1500);
-    });
-  };
-  img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(new XMLSerializer().serializeToString(svg));
-}
 function viewNotes(d) {
   const t = tx();
   return `<div class="notes">${d.notes.map((n, i) => `<div class="note" style="background:${NOTE_COLORS[i % 6]};--r:${NOTE_ROT[i % 6]}deg"><h3>${esc(n.title)}</h3><ul>${n.points.map((p) => `<li>${esc(p)}</li>`).join("")}</ul>${n.tip ? `<p class="tip">💡 <b>${t.tipLbl}:</b> ${esc(n.tip)}</p>` : ""}</div>`).join("")}</div>`;
@@ -1003,10 +884,6 @@ function viewVisual(d) {
   return h;
 }
 function plainText(l) {
-  if (l.mode === "mindmap" && l.data) {
-    const out = [l.data.title || l.title]; const walk = (n, d) => { out.push("  ".repeat(d) + "- " + n.label); (n.children || []).forEach((c) => walk(c, d + 1)); };
-    l.data.branches.forEach((b) => walk(b, 0)); return out.join("\n");
-  }
   if (l.mode === "stickynotes" && l.data) return l.data.notes.map((n) => n.title + "\n" + n.points.map((p) => "- " + p).join("\n") + (n.tip ? "\n* " + n.tip : "")).join("\n\n");
   if (l.mode === "visual" && l.data) return l.data.cards.map((c) => `${c.icon} ${c.term}: ${c.meaning}` + (c.hook ? ` (${c.hook})` : "")).join("\n") + (l.data.steps && l.data.steps.length ? "\n\n" + l.data.steps.map((x, i) => `${i + 1}. ${x}`).join("\n") : "");
   return l.text || "";
@@ -1015,14 +892,13 @@ function renderLesson() {
   const t = tx(), l = lessonOpen; if (!l) return;
   $("viewTitle").textContent = l.title; $("timer").hidden = true;
   let body;
-  if (l.mode === "mindmap" && l.data) body = viewMindmap(l.data);
-  else if (l.mode === "stickynotes" && l.data) body = viewNotes(l.data);
+  if (l.mode === "stickynotes" && l.data) body = viewNotes(l.data);
   else if (l.mode === "visual" && l.data) body = viewVisual(l.data);
   else if (l.mode === "handwritten") body = `<div class="paper">${md(l.text || "")}</div>`;
   else body = `<div class="md">${md(l.text || "")}</div>`;
-  const actions = l.mode === "mindmap" ? "" :
+  const actions =
     `<div class="qactions no-print"><button class="btn" data-act="copyLesson" id="copyL" type="button">${t.copy}</button><button class="btn ghost" data-act="printPage" type="button">${t.print}</button></div>`;
-  const textual = !["mindmap", "stickynotes", "visual"].includes(l.mode) && l.text;
+  const textual = !["stickynotes", "visual"].includes(l.mode) && l.text;
   $("viewBody").innerHTML = body + actions + (textual ? gptBlock() : "") + sameSourceBar(l.mode) + `<p class="muted no-print" style="margin-top:12px">${t.checkNote}</p>`;
 }
 
@@ -1180,13 +1056,10 @@ document.addEventListener("click", (e) => {
     case "copyLesson": navigator.clipboard.writeText(plainText(lessonOpen)).then(() => { $("copyL").textContent = t.copied; setTimeout(() => { const b = $("copyL"); if (b) b.textContent = t.copy; }, 1500); }).catch(() => {}); break;
     case "printPage": window.print(); break;
     case "about": openAbout(arg === "offers"); break;
-    case "openStamp": openStamp(); break;
-    case "closeStamp": closeSheet("stampSheet"); break;
     case "closeAbout": closeSheet("aboutSheet"); break;
     case "newSource": clearFile("lesson"); clearFile("style"); $("fText").value = ""; updateSrcBar(); break;
     case "srcMode": stopTimer(); quiz = null; lessonOpen = null; closeSheet("viewSheet"); render(); openCreate(arg); break;
     case "copyPrompt": navigator.clipboard.writeText(buildPrompt(arg, (lessonOpen && lessonOpen.text) || "")).then(() => { const old = el.textContent; el.textContent = t.copiedShort; setTimeout(() => { el.textContent = old; }, 1600); }).catch(() => {}); break;
-    case "mapPng": downloadMindmap(); break;
     case "logout": logout(); break;
     case "clearData": if (confirm(t.clearConfirm)) { lib = emptyLib(); saveLib(); render(); } break;
   }
