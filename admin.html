@@ -358,8 +358,9 @@ function renderContent() {
   let h = `<div class="card"><b>الزيارات وطلبات واتساب</b><p class="muted">أضف <b dir="ltr">?ref=اسم</b> لأي رابط تنشره، مثل <b dir="ltr">?ref=fb</b> أو <b dir="ltr">?ref=tg</b>، فتعرف أي قناة تجلب أكثر. والرمز المضاف إلى الصور يستعمل <b dir="ltr">?ref=share</b>.</p><div id="visitsBox"><p class="muted">…</p></div></div>`;
   h += `<div class="card"><b>نبذة عن التطبيق</b>${ta("بالعربية", "about.ar", c.about.ar, 4)}${ta("Français", "about.fr", c.about.fr, 4)}</div>`;
   h += `<div class="card"><b>المزايا</b><p class="muted">اكتب كل ميزة في سطر مستقل.</p>${ta("بالعربية", "features.ar", c.features.ar, 7)}${ta("Français", "features.fr", c.features.fr, 7)}</div>`;
-  h += `<div class="card"><b>الاشتراكات (العروض)</b><p class="muted">تظهر للطالب في صفحة «الاشتراكات والمزايا». لا تنسَ كتابة الأسعار الفعلية.</p><div id="offersBox">${c.offers.map(offerEd).join("")}</div><button class="btn sm ghost" data-do="addOffer" type="button">+ إضافة عرض</button></div>`;
-  h += `<div class="card"><b>التواصل للاشتراك</b><div class="grid" style="margin-top:8px">${inp("رابط واتساب (يبدأ بـ https://)", "contact_url", c.contact_url)}${inp("نص الزر (عربي)", "contact_text.ar", c.contact_text.ar)}${inp("Texte du bouton (FR)", "contact_text.fr", c.contact_text.fr)}</div><p class="muted">مثال الرابط: https://wa.me/213XXXXXXXXX</p></div>`;
+  h += `<div class="card"><b>الاشتراكات (العروض)</b><p class="muted">تظهر للطالب في صفحة «الاشتراكات والمزايا». لا تنسَ كتابة الأسعار الفعلية.</p><div id="offersBox">${c.offers.map(offerEd).join("")}</div><div class="actions"><button class="btn sm ghost" data-do="addOffer" type="button">+ إضافة عرض</button><button class="btn sm" data-do="offersTemplate" type="button">تحميل قالب العروض (مجاني / 300 / 500 / 900 دج)</button></div></div>`;
+  h += `<div class="card"><b>التواصل للاشتراك</b><div class="grid" style="margin-top:8px">${inp("رابط واتساب (يبدأ بـ https://)", "contact_url", c.contact_url)}${inp("نص الزر (عربي)", "contact_text.ar", c.contact_text.ar)}${inp("Texte du bouton (FR)", "contact_text.fr", c.contact_text.fr)}</div><p class="muted">مثال الرابط: https://wa.me/213XXXXXXXXX</p>
+    <b style="display:block;margin-top:12px">خدمة العملاء (تظهر في صفحة الاشتراكات)</b>${ta("العنوان — عربي", "support.title.ar", (c.support || {title:{}}).title.ar || "", 1)}${ta("Titre — FR", "support.title.fr", (c.support || {title:{}}).title.fr || "", 1)}${ta("النص — عربي (ضع رقم واتساب فيه)", "support.text.ar", (c.support || {text:{}}).text.ar || "", 3)}${ta("Texte — FR", "support.text.fr", (c.support || {text:{}}).text.fr || "", 3)}</div>`;
   h += `<div class="card"><b>برومت المخطط البصري (يظهر تحت الملخص)</b><p class="muted">اكتب <b dir="ltr">{{SUMMARY}}</b> في المكان الذي سيُدرج فيه الملخص تلقائياً. وفي النص الافتراضي شريط التعريف السفلي (اسم التطبيق والرابط ورقم واتساب)، فعدّله هنا إن تغيّر أي منها.</p>
     ${ta("بالعربية", "prompts.infographic.ar", c.prompts.infographic.ar, 14)}${ta("Français", "prompts.infographic.fr", c.prompts.infographic.fr, 14)}</div>`;
   h += `<div class="savebar"><button class="btn orange" data-do="saveContent" type="button">حفظ التغييرات</button><button class="btn ghost" data-do="resetContent" type="button">استعادة النصوص الافتراضية</button></div>`;
@@ -375,12 +376,18 @@ function collectContent() {
   });
   return { about: { ar: g("about.ar"), fr: g("about.fr") }, features: { ar: g("features.ar"), fr: g("features.fr") }, offers,
     contact_url: g("contact_url"), contact_text: { ar: g("contact_text.ar"), fr: g("contact_text.fr") },
+    support: { title: { ar: g("support.title.ar"), fr: g("support.title.fr") }, text: { ar: g("support.text.ar"), fr: g("support.text.fr") } },
     prompts: { infographic: { ar: g("prompts.infographic.ar"), fr: g("prompts.infographic.fr") } } };
 }
 $("contentTab").addEventListener("click", async (e) => {
   const b = e.target.closest("[data-do]"); if (!b) return;
   const act = b.dataset.do;
   if (act === "addOffer") { cdata = collectContent(); if (cdata.offers.length >= 6) return toast("الحد الأقصى 6 عروض", true); cdata.offers.push({ title: { ar: "", fr: "" }, price: { ar: "", fr: "" }, badge: { ar: "", fr: "" }, perks: { ar: "", fr: "" }, highlight: false }); renderContent(); }
+  else if (act === "offersTemplate") {
+    if (!confirm("استبدال العروض الحالية بقالب العروض الجديد؟ لن يُحفظ شيء حتى تضغط «حفظ التغييرات».")) return;
+    const d = await api("content_defaults"); if (!d || !d.content) return;
+    cdata = collectContent(); cdata.offers = d.content.offers; cdata.support = d.content.support; renderContent(); toast("تم التحميل. راجع الأسعار ثم اضغط «حفظ التغييرات»");
+  }
   else if (act === "delOffer") { const i = +b.closest(".offer-ed").dataset.i; cdata = collectContent(); cdata.offers.splice(i, 1); renderContent(); }
   else if (act === "saveContent") {
     const url = collectContent().contact_url.trim();
