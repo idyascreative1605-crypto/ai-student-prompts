@@ -295,7 +295,7 @@ function renderUsers() {
   const filters = [["all", "الكل"], ["on", "فعّال"], ["exp", "منتهي"], ["off", "موقوف"]];
   box.innerHTML = `
     <div class="sums"><div class="card"><b>${cnt.all}</b><span class="muted">الأكواد</span></div><div class="card"><b>${cnt.on}</b><span class="muted">فعّال</span></div>
-      <div class="card"><b>${cnt.exp}</b><span class="muted">منتهي</span></div><div class="card"><b>${usedToday}</b><span class="muted">استعملوا اليوم</span></div><div class="card"><b>${totalReq}</b><span class="muted">إجمالي الطلبات</span></div></div>
+      <div class="card"><b>${cnt.exp}</b><span class="muted">منتهي</span></div><div class="card"><b>${usedToday}</b><span class="muted">استعملوا اليوم</span></div><div class="card"><b dir="ltr">${data.todayTotal == null ? "—" : data.todayTotal + " / " + data.cap}</b><span class="muted">طلبات اليوم / السعة</span></div><div class="card"><b>${totalReq}</b><span class="muted">إجمالي الطلبات</span></div></div>
     <div class="card"><div class="grid"><div><label for="uq">بحث (اسم، هاتف، كود، ملاحظة)</label><input id="uq" value="${esc(uq)}"></div></div>
       <div class="fchips">${filters.map((f) => `<button class="fchip ${ufilter === f[0] ? "on" : ""}" data-filter="${f[0]}" type="button">${f[1]} (${cnt[f[0]]})</button>`).join("")}</div>
       <div class="actions"><button class="btn sm orange" data-udo="copy" type="button">نسخ الجدول للصقه في Google Sheets</button><button class="btn sm" data-udo="xlsx" type="button">تصدير Excel (.xlsx)</button></div>
